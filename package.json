@@ -1,0 +1,22 @@
+{
+  "name": "botwar",
+  "version": "1.0.0",
+  "description": "JS13k project",
+  "main": "index.js",
+  "scripts": {
+    "dev": "live-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jaeg/BotWar.git"
+  },
+  "author": "John Godsey",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jaeg/BotWar/issues"
+  },
+  "homepage": "https://github.com/jaeg/BotWar#readme",
+  "devDependencies": {
+    "live-server": "^1.2.0"
+  }
+}
