@@ -5,6 +5,45 @@ var debugDiv = document.getElementById('debug')
 var ide = document.getElementById('ide')
 
 var functionTable = ["if","endif","goto", "print","end"]
+functionTable["goto"] = function(tokens) {
+  if (tokens.length === 2) {
+    newLine = labelTable[tokens[1]]
+    if (newLine != undefined) {
+      currentLine = newLine - 1
+    }
+  } else {
+    errorOff(currentLine)
+    return false
+  }
+  return true
+}
+
+functionTable["if"] = function(tokens) {
+  var expression = reversePolishNotator(tokens.slice(1,tokens.length))
+  console.log(expression)
+  if (reversePolishNotationSolver(expression) == false) {
+    //Skip till we see an endif.
+    while(currentLine < tokenizedProgram.length && tokenizedProgram[currentLine][0] !== "endif") {
+      currentLine++
+    }
+  }
+  return true
+}
+
+functionTable["print"] = function(tokens) {
+  addToOutput(tokens[1])
+  return true
+}
+
+functionTable["end"] = function(tokens) {
+  stopProgram = true;
+  return true
+}
+
+functionTable["endif"] = function(tokens) {
+  return true
+}
+
 var labelTable = []
 var variableTable = []
 var currentLine = 0
@@ -12,7 +51,6 @@ var stopProgram = false
 
 //Returns false if fails to compile.
 function compile(program) {
-  functionTable = ["if","endif","goto", "print","end"]
   labelTable = []
   variableTable = []
 
@@ -33,7 +71,7 @@ function compile(program) {
     if (tokens.length == 2){
       //Colons (:) are labels
       if (tokens[1] === ':'){
-        if (functionTable.indexOf(tokens[0]) == -1) {
+        if (functionTable[tokens[0]] == undefined) {
           labelTable[tokens[0]] = line
         } else {
           return false
@@ -198,40 +236,8 @@ function stepProgram() {
 
   tokens = tokenizedProgram[currentLine]
   if (tokens.length !== 0) {
-    if ((functionTable.indexOf(tokens[0]) != -1 || labelTable[tokens[0]] != undefined || variableTable[tokens[0]] != undefined)) {
-      switch(tokens[0]) {
-        case "goto":
-          //goto has 1 param
-          if (tokens.length === 2) {
-            newLine = labelTable[tokens[1]]
-            if (newLine != undefined) {
-              currentLine = newLine - 1
-            }
-          } else {
-            errorOff(currentLine)
-            return
-          }
-          break
-        case "if":
-          //test if
-          var expression = reversePolishNotator(tokens.slice(1,tokens.length))
-          console.log(expression)
-          if (reversePolishNotationSolver(expression) == false) {
-            //Skip till we see an endif.
-            while(currentLine < tokenizedProgram.length && tokenizedProgram[currentLine][0] !== "endif") {
-              currentLine++
-            }
-          }
-          break
-        case "print":
-            addToOutput(tokens[1])
-            break
-        case "end":
-          stopProgram = true;
-          break
-        case "endif":
-          break
-      }
+    if (functionTable[tokens[0]] != undefined || labelTable[tokens[0]] != undefined) {
+       if (!functionTable[tokens[0]](tokens)) {return} //Run the built in command.  kill if the command errors.
     } else {
       if (tokens.length >= 3) {// need minimum of 3 to do a variable assignment
         if (functionTable[tokens[0]] === undefined) {
