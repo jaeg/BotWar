@@ -4,7 +4,7 @@ var outputDiv = document.getElementById('output')
 var debugDiv = document.getElementById('debug')
 var ide = document.getElementById('ide')
 
-var functionTable = ["if","endif","goto", "print","dim","end"]
+var functionTable = ["if","endif","goto", "print","end"]
 var labelTable = []
 var variableTable = []
 var currentLine = 0
@@ -12,7 +12,7 @@ var stopProgram = false
 
 //Returns false if fails to compile.
 function compile(program) {
-  functionTable = ["if","endif","goto", "print","dim","end"]
+  functionTable = ["if","endif","goto", "print","end"]
   labelTable = []
   variableTable = []
 
@@ -113,7 +113,7 @@ function reversePolishNotator(tokens) {
     }
 
     stack = stack.concat(operatorStack)
-
+    console.log(stack)
     return stack
 }
 
@@ -233,8 +233,17 @@ function stepProgram() {
           break
       }
     } else {
-      errorOff(currentLine)
-      return
+      if (tokens.length >= 3) {// need minimum of 3 to do a variable assignment
+        if (functionTable[tokens[0]] === undefined) {
+          if (tokens[1] === "=") {
+            var expression = reversePolishNotator(tokens.slice(2,tokens.length))
+            variableTable[tokens[0]]=reversePolishNotationSolver(expression)
+          }
+        }
+      } else {
+        errorOff(currentLine)
+        return
+      }
     }
   }
 
