@@ -65,7 +65,7 @@ function stepProgram() {
 
   tokens = tokenizedProgram[currentLine]
   if (tokens.length !== 0) {
-    if ((functionTable.indexOf(tokens[0]) != -1 || labelTable[tokens[0]] != undefined)) {
+    if ((functionTable.indexOf(tokens[0]) != -1 || labelTable[tokens[0]] != undefined || variableTable[tokens[0]] != undefined)) {
       switch(tokens[0]) {
         case "goto":
           //goto has 1 param
@@ -95,7 +95,8 @@ function stepProgram() {
         case "end":
           stopProgram = true;
           break
-        break
+        case "endif":
+          break
       }
     } else {
       errorOff(currentLine)
