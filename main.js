@@ -17,7 +17,7 @@ function compile(program) {
   variableTable = []
 
   for (var line = 0; line < program.length; line++) {
-    var tokenizedLine = program[line].split(/([$&+,:;=?@#|'<>.-^*()%! ])/g)
+    var tokenizedLine = program[line].split(/([^a-zA-Z0-9])/g)
     tokenizedProgram[line] = []
     for (i=0; i < tokenizedLine.length; i++){
       if (tokenizedLine[i].trim() !== "") {
@@ -58,8 +58,141 @@ function compile(program) {
   return true;
 }
 
+function reversePolishNotator(tokens) {
+    stack = [];
+    operatorStack = [];
+
+    for (var i = 0; i < tokens.length; i++) {
+        //Variable replacer
+        var number = NaN
+        if (variableTable[tokens[i]] !== undefined) {
+            number = variableTable[tokens[i]]
+        } else {
+            number = parseInt(tokens[i], 10)
+        }
+
+        if (!isNaN(number)) {
+            stack.push(number)
+        } else {
+            if (getPrecedence(tokens[i].replace("!","")) > 0) {
+
+                while (operatorStack.length !== 0 && getPrecedence(tokens[i].replace("!","")) <= getPrecedence(operatorStack[0])) {
+                    stack.push(operatorStack.shift())
+                }
+                operatorStack.unshift(tokens[i])
+            } else {
+                if (tokens[i] === "!") {
+                  if (tokens[i+1] !== undefined) {
+                    if (getPrecedence(tokens[i + 1]) === 2 ) {
+                      tokens[i+1] = "!" + tokens[i+1]
+                    }
+                  }
+                }
+
+                if (tokens[i] === "(") {
+                    operatorStack.unshift(tokens[i])
+                }
+
+                if (tokens[i] === ")") {
+                    var done = false
+                    while (!done) {
+                        currentOperator = operatorStack.shift()
+                        if (currentOperator === "(") {
+                            done = true
+                        } else {
+                            stack.push(currentOperator)
+                        }
+
+                        if (operatorStack.length === 0) {
+                            done = true
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    stack = stack.concat(operatorStack)
+
+    return stack
+}
+
+function reversePolishNotationSolver(inputStack) {
+    var output = 0
+    var stack = []
+    for (var i = 0; i < inputStack.length; i++) {
+        if (!isNaN(inputStack[i])) {
+            stack.push(inputStack[i])
+        } else {
+            var a = stack.pop()
+            var b = stack.pop()
+
+            switch (inputStack[i]) {
+                case "+":
+                    stack.push(a + b);
+                    break;
+                case "-":
+                    stack.push(a - b);
+                    break;
+                case "*":
+                    stack.push(a * b);
+                    break;
+                case "/":
+                    stack.push(a / b);
+                    break;
+                case "=":
+                  stack.push(a === b);
+                  break;
+                case ">":
+                  stack.push(a < b);
+                  break;
+                case "<":
+                  stack.push(a > b);
+                  break;
+                case "!=":
+                  stack.push(!(a === b));
+                  break;
+                case "!>":
+                  stack.push(!(a < b));
+                  break;
+                case "!<":
+                  stack.push(!(a > b));
+                  break;
+                case "and":
+                  stack.push(a && b);
+                  break;
+                case "or":
+                  stack.push(a || b);
+                  break;
+            }
+        }
+    }
+
+    return stack[0]
+}
+
+function getPrecedence(operand){
+  switch (operand)
+  {
+    case '+':
+    case '-': return 3;
+    case '*':
+    case '/': return 4;
+    case '^': return 5;
+    case 'and':
+    case 'or': return 1;
+    case '=':
+    case '<':
+    case '>': return 2;
+    case '!': return -1;
+    default: return 0;
+  }
+}
+
+
 function stepProgram() {
   if (currentLine >= tokenizedProgram.length) {
+    stopProgram = true
     return
   }
 
@@ -81,15 +214,16 @@ function stepProgram() {
           break
         case "if":
           //test if
-          if (tokens[1] === "0") {
+          var expression = reversePolishNotator(tokens.slice(1,tokens.length))
+          console.log(expression)
+          if (reversePolishNotationSolver(expression) == false) {
             //Skip till we see an endif.
-            while(tokenizedProgram[line][0] !== "endif" || line < tokenizedProgram.length) {
+            while(currentLine < tokenizedProgram.length && tokenizedProgram[currentLine][0] !== "endif") {
               currentLine++
             }
           }
           break
         case "print":
-            console.log(tokens[1])
             addToOutput(tokens[1])
             break
         case "end":
