@@ -80,7 +80,6 @@ class Robot{
     this.variableTable["dir"] = this.direction
 
     var tokens = this.tokenizedProgram[this.currentLine]
-    console.log(this.currentLine)
     if (tokens.length !== 0) {
       if (functionTable[tokens[0]] != undefined) {
          if (!functionTable[tokens[0]](tokens,this)) {
@@ -278,6 +277,7 @@ functionTable["move"] = function(tokens, that) {
     }
     that.x += speed * Math.sin(direction * Math.PI / 180);
     that.y += speed * Math.cos(direction * Math.PI / 180);
+    that.direction = direction
   } else {
     errorOff(that.currentLine)
     return false
