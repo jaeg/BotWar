@@ -1,15 +1,23 @@
-var program = [];
-var tokenizedProgram = [];
 var outputDiv = document.getElementById('output')
 var debugDiv = document.getElementById('debug')
 var ide = document.getElementById('ide')
+var canvas = document.getElementById("main");
+canvas.width = canvas.clientWidth;
+canvas.height = canvas.clientHeight;
+var ctx = canvas.getContext("2d");
 
-class Interpreter{
+
+class Robot{
   constructor(program) {
+    this.x = canvas.width / 2
+    this.y = canvas.height / 2
+    this.direction = 0
     this.program = program
     this.tokenizedProgram = []
     this.currentLine = 0
-    this.stopProgram = false
+    this.stopProgram = true
+    this.labelTable = []
+    this.variableTable = []
   }
   run() {
 
@@ -46,9 +54,8 @@ class Interpreter{
     }
 
     //Fun debug stuff.
-    console.log(this.labelTable)
     addToDebug("Label Map:")
-    for (label in this.labelTable) {
+    for (var label in this.labelTable) {
       addToDebug(label + ":" + this.labelTable[label])
     }
 
@@ -60,37 +67,46 @@ class Interpreter{
   }
 
   stepProgram() {
-    console.log(this)
+    while (this.currentLine < this.tokenizedProgram.length) {
+    if (this.stopProgram)
+      return
     if (this.currentLine >= this.tokenizedProgram.length) {
       this.stopProgram = true
       return
     }
 
+    this.variableTable["x"] = this.x
+    this.variableTable["y"] = this.y
+    this.variableTable["dir"] = this.direction
+
     var tokens = this.tokenizedProgram[this.currentLine]
+    console.log(this.currentLine)
     if (tokens.length !== 0) {
-      if (functionTable[tokens[0]] != undefined || this.labelTable[tokens[0]] != undefined) {
-         if (!functionTable[tokens[0]](tokens,this)) {return} //Run the built in command.  kill if the command errors.
+      if (functionTable[tokens[0]] != undefined) {
+         if (!functionTable[tokens[0]](tokens,this)) {
+           this.stopProgram = true
+           return
+         } //Run the built in command.  kill if the command errors.
       } else {
-        if (tokens.length >= 3) {// need minimum of 3 to do a variable assignment
-          if (functionTable[tokens[0]] === undefined) {
-            if (tokens[1] === "=") {
-              var expression = this.reversePolishNotator(tokens.slice(2,tokens.length))
-              variableTable[tokens[0]]=this.reversePolishNotationSolver(expression)
+        if (this.labelTable[tokens[0]] === undefined) {
+          if (tokens.length >= 3) {// need minimum of 3 to do a variable assignment
+            if (functionTable[tokens[0]] === undefined) {
+              if (tokens[1] === "=") {
+                var expression = this.reversePolishNotator(tokens.slice(2,tokens.length))
+                this.variableTable[tokens[0]]=this.reversePolishNotationSolver(expression)
+              }
             }
+          } else {
+            errorOff(this.currentLine)
+            return
           }
-        } else {
-          errorOff(this.currentLine)
-          return
         }
       }
     }
+    if (tokens[0] === "goto") return;
     this.currentLine++
-    console.log(this.currentLine)
 
-    if (!this.stopProgram) {
-      var that = this
-      setTimeout(function(){that.stepProgram()}, 100)
-    }
+  }
   }
 
   reversePolishNotator(tokens) {
@@ -148,7 +164,6 @@ class Interpreter{
       }
 
       stack = stack.concat(operatorStack)
-      console.log(stack)
       return stack
   }
 
@@ -212,7 +227,7 @@ functionTable["goto"] = function(tokens, that) {
   if (tokens.length === 2) {
     newLine = that.labelTable[tokens[1]]
     if (newLine != undefined) {
-      that.currentLine = newLine - 1
+      that.currentLine = newLine
     }
   } else {
     errorOff(that.currentLine)
@@ -225,7 +240,7 @@ functionTable["if"] = function(tokens,that) {
   var expression = that.reversePolishNotator(tokens.slice(1,tokens.length))
   if (that.reversePolishNotationSolver(expression) == false) {
     //Skip till we see an endif.
-    while(currentLine < that.tokenizedProgram.length && that.tokenizedProgram[that.currentLine][0] !== "endif") {
+    while(that.currentLine < that.tokenizedProgram.length && that.tokenizedProgram[that.currentLine][0] !== "endif") {
       that.currentLine++
     }
   }
@@ -234,7 +249,6 @@ functionTable["if"] = function(tokens,that) {
 
 functionTable["print"] = function(tokens, that) {
   addToOutput(tokens[1])
-  console.log("Test")
   return true
 }
 
@@ -247,6 +261,30 @@ functionTable["endif"] = function(tokens, that) {
   return true
 }
 
+functionTable["move"] = function(tokens, that) {
+  if (tokens.length === 3) {
+    var direction = parseInt(tokens[1],10)
+    var speed = parseInt(tokens[2],10)
+    if (isNaN(direction)) {
+      direction = that.variableTable[tokens[1]]
+    }
+
+    if (isNaN(speed) ) {
+      speed = that.variableTable[tokens[2]]
+    }
+    if (isNaN(direction) || isNaN(speed)) {
+      errorOff(that.currentLine)
+      return false
+    }
+    that.x += speed * Math.sin(direction * Math.PI / 180);
+    that.y += speed * Math.cos(direction * Math.PI / 180);
+  } else {
+    errorOff(that.currentLine)
+    return false
+  }
+
+  return true
+}
 
 function getPrecedence(operand){
   switch (operand)
@@ -267,21 +305,42 @@ function getPrecedence(operand){
 }
 
 
-function run(){
-  clearDebug()
-  clearOutput()
+var engine = {
+  robot:-1,
+  init: function() {
+    clearDebug()
+    clearOutput()
 
-  var program = ide.value.split(/\r?\n/)
-  var interpreter = new Interpreter(program)
-  if (!interpreter.compile(program)){
-    alert("Failed to compile.")
-  } else {
-    interpreter.stepProgram()
+    var program = ide.value.split(/\r?\n/)
+    this.robot = new Robot(program)
+    if (!this.robot.compile(program)){
+      alert("Failed to compile.")
+    }
+  },
+  update: function() {
+    if (this.robot != -1) {
+      this.robot.stepProgram()
+    }
+  },
+  draw: function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = 'red'; // Stroke in white
+    ctx.beginPath();
+    ctx.arc(this.robot.x, this.robot.y, 5, 0, 2 * Math.PI);
+    ctx.stroke();
+
+
   }
 }
 
+function run(){
+  engine.init()
+  engine.robot.stopProgram = false
+}
+
 function stop(){
-  stopProgram = true
+  engine.robot.stopProgram = true
 }
 
 function errorOff(line) {
@@ -304,3 +363,14 @@ function addToDebug(text) {
   debugDiv.innerHTML += "</br>"
   debugDiv.innerHTML += text
 }
+
+
+function step() {
+  engine.update();
+  engine.draw();
+
+  window.requestAnimationFrame(step);
+}
+
+engine.init()
+window.requestAnimationFrame(step);

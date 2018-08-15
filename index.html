@@ -11,12 +11,31 @@
     </style>
   </head>
   <body>
+    <canvas id="main">
+    </canvas>
     <h3>IDE</h3>
     <textarea id="ide">
-if 6 + 4 = 10
-print yesItDoes
-endif
-print done
+      flip = 0
+      top:
+      if x < 1
+      flip = 0
+      print bounce
+      endif
+
+      if x > 299
+      flip = 1
+      print bounce
+      endif
+
+      if flip = 0
+      move 90 10
+      endif
+
+      if flip = 1
+      move 270 10
+      endif
+
+      goto top
     </textarea>
     <div>
       <button onclick="run()">Run</button>
