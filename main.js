@@ -42,7 +42,7 @@ class Robot{
       if (tokens.length == 2){
         //Colons (:) are labels
         if (tokens[1] === ':'){
-          if (functionTable[tokens[0]] == undefined) {
+          if (controlTable[tokens[0]] == undefined) {
             this.labelTable[tokens[0]] = line
           } else {
             return false
@@ -75,21 +75,17 @@ class Robot{
       return
     }
 
-    this.variableTable["x"] = this.x
-    this.variableTable["y"] = this.y
-    this.variableTable["dir"] = this.direction
-
     var tokens = this.tokenizedProgram[this.currentLine]
     if (tokens.length !== 0) {
-      if (functionTable[tokens[0]] != undefined) {
-         if (!functionTable[tokens[0]](tokens,this)) {
+      if (controlTable[tokens[0]] != undefined) {
+         if (!controlTable[tokens[0]](tokens,this)) {
            this.stopProgram = true
            return
          } //Run the built in command.  kill if the command errors.
       } else {
         if (this.labelTable[tokens[0]] === undefined) {
           if (tokens.length >= 3) {// need minimum of 3 to do a variable assignment
-            if (functionTable[tokens[0]] === undefined) {
+            if (controlTable[tokens[0]] === undefined) {
               if (tokens[1] === "=") {
                 var expression = this.reversePolishNotator(tokens.slice(2,tokens.length))
                 this.variableTable[tokens[0]]=this.reversePolishNotationSolver(expression)
@@ -117,7 +113,21 @@ class Robot{
           var number = NaN
           if (this.variableTable[tokens[i]] !== undefined) {
               number = this.variableTable[tokens[i]]
-          } else {
+          } else if (functionTable[tokens[i]] !== undefined) {
+            if (tokens.length > i + 1) {
+              if (tokens[i + 1] == "(") {
+                var end = i + 1
+                while (end < tokens.length && tokens[end] != ")") {
+
+                  end++
+                }
+                var params = tokens.splice(i+1, end - i)
+                tokens[i] = functionTable[tokens[i]](params, this)
+                number = tokens[i]
+              }
+            }
+          }
+          else {
               number = parseInt(tokens[i], 10)
           }
 
@@ -125,7 +135,6 @@ class Robot{
               stack.push(number)
           } else {
               if (getPrecedence(tokens[i].replace("!","")) > 0) {
-
                   while (operatorStack.length !== 0 && getPrecedence(tokens[i].replace("!","")) <= getPrecedence(operatorStack[0])) {
                       stack.push(operatorStack.shift())
                   }
@@ -146,7 +155,7 @@ class Robot{
                   if (tokens[i] === ")") {
                       var done = false
                       while (!done) {
-                          currentOperator = operatorStack.shift()
+                          var currentOperator = operatorStack.shift()
                           if (currentOperator === "(") {
                               done = true
                           } else {
@@ -222,7 +231,23 @@ class Robot{
 }
 
 var functionTable = []
-functionTable["goto"] = function(tokens, that) {
+functionTable["getx"] = function(tokens, that) {
+  return that.x
+}
+functionTable["gety"] = function(tokens, that) {
+  return that.y
+}
+functionTable["getdir"] = function(tokens, that) {
+  return that.direction
+}
+functionTable["sin"] = function(tokens, that) {
+  var result = that.reversePolishNotator(tokens)
+  result = that.reversePolishNotationSolver(result)
+  return Math.sin(result)
+}
+
+var controlTable = []
+controlTable["goto"] = function(tokens, that) {
   if (tokens.length === 2) {
     newLine = that.labelTable[tokens[1]]
     if (newLine != undefined) {
@@ -235,7 +260,7 @@ functionTable["goto"] = function(tokens, that) {
   return true
 }
 
-functionTable["if"] = function(tokens,that) {
+controlTable["if"] = function(tokens,that) {
   var expression = that.reversePolishNotator(tokens.slice(1,tokens.length))
   if (that.reversePolishNotationSolver(expression) == false) {
     //Skip till we see an endif.
@@ -246,21 +271,21 @@ functionTable["if"] = function(tokens,that) {
   return true
 }
 
-functionTable["print"] = function(tokens, that) {
+controlTable["print"] = function(tokens, that) {
   addToOutput(tokens[1])
   return true
 }
 
-functionTable["end"] = function(tokens, that) {
+controlTable["end"] = function(tokens, that) {
   stopProgram = true;
   return true
 }
 
-functionTable["endif"] = function(tokens, that) {
+controlTable["endif"] = function(tokens, that) {
   return true
 }
 
-functionTable["move"] = function(tokens, that) {
+controlTable["move"] = function(tokens, that) {
   if (tokens.length === 3) {
     var direction = parseInt(tokens[1],10)
     var speed = parseInt(tokens[2],10)
@@ -330,6 +355,12 @@ var engine = {
     ctx.arc(this.robot.x, this.robot.y, 5, 0, 2 * Math.PI);
     ctx.stroke();
 
+    var aX = this.robot.x + 6 * Math.sin(this.robot.direction * Math.PI / 180);
+    var aY = this.robot.y + 6 * Math.cos(this.robot.direction * Math.PI / 180);
+    ctx.beginPath();
+    ctx.moveTo(this.robot.x,this.robot.y);
+    ctx.lineTo(aX,aY);
+    ctx.stroke();
 
   }
 }
