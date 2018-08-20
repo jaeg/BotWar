@@ -134,38 +134,3 @@ class Token {
     this.type = type
   }
 }
-
-function run() {
-  clearDebug()
-  clearOutput()
-
-  var program = ide.value.split(/\r?\n/)
-  var tokenizer = new Tokenizer()
-  tokenizedProgram = tokenizer.tokenize(program)
-  var parser = new Parser()
-  var parsed = parser.prepare(tokenizedProgram)
-  var interpreter = new Interpreter()
-  interpreter.run(parsed)
-}
-
-
-function errorOff(line) {
-  addToOutput("Runtime error on line " + line)
-}
-
-function clearDebug(){
-  debugDiv.innerHTML = ""
-}
-function clearOutput(){
-  outputDiv.innerHTML = ""
-}
-
-function addToOutput(text) {
-  outputDiv.innerHTML += "</br>"
-  outputDiv.innerHTML += text
-}
-
-function addToDebug(text) {
-  debugDiv.innerHTML += "</br>"
-  debugDiv.innerHTML += text
-}

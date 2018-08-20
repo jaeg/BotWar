@@ -1,18 +1,23 @@
 class Interpreter {
-  constructor() {
+  constructor(program) {
     var that = this
     this.variables = []
     this.controlTable = []
     this.position = 0
     this.labelTable = []
     this.commands = []
+
+    console.log("Program",program)
+    this.labelTable = program.labelTable
+    this.commands = program.commands
+
     this.controlTable["print"] = function(command) {
       if (command.value.type == "string" || command.value.type == "number") {
-        console.log("Print",command.value.value)
+        addToOutput(command.value.value)
       } else if (command.value.type == "variable") {
-        console.log("Print",that.variables[command.value.value])
+        addToOutput(that.variables[command.value.value])
       }else {
-        console.log("Print",that.solve(command.value))
+        addToOutput(that.solve(command.value))
       }
     }
 
@@ -62,18 +67,12 @@ class Interpreter {
       } else {
         that.variables[command.variable] = that.solve(command.value)
       }
-
-      console.log(that.variables)
     }
 
     this.controlTable["goto"] = function(command) {
       var goto = 0
-      if (command.value.type == "string") {
-        goto = that.labelTable[command.value.value]
-      }
-      if (command.value.type == "number") {
-        goto = parseInt(command.value.value) - 1
-      }
+
+      goto = that.labelTable[command.value] - 1
 
       that.position = goto
     }
@@ -97,13 +96,7 @@ class Interpreter {
     }
   }
 
-  run(program) {
-    console.log("Program",program)
-    this.labels = program.labelTable
-    this.commands = program.commands
-    this.variables = []
-    this.position = 0
-
+  run() {
     for (this.position = 0; this.position < this.commands.length; this.position++) {
       var command = this.commands[this.position]
       if (this.controlTable[command.cmd] != undefined) {
@@ -111,6 +104,18 @@ class Interpreter {
       } else {
         console.log("Runtime Error")
       }
+    }
+  }
+
+  step() {
+    if (this.position < this.commands.length) {
+      var command = this.commands[this.position]
+      if (this.controlTable[command.cmd] != undefined) {
+        this.controlTable[command.cmd](command)
+      } else {
+        console.log("Runtime Error")
+      }
+      this.position++
     }
   }
 

@@ -99,7 +99,6 @@ class Parser {
 
   getAtomic() {
     var command = null
-    console.log("atomic",this.currentToken())
     if (this.currentToken().type === "word") {
       command = {type:"variable", value:this.currentToken().value}
     } else if (this.currentToken().type === "string") {
