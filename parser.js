@@ -13,6 +13,7 @@ class Parser {
   //Prepare goes through the tokens and creates a syntax tree
   prepare(program) {
     this.tokens = program.tokens
+    program.labelTable = []
     var commands = []
 
     while (this.position < this.tokens.length - 1) {
@@ -24,6 +25,7 @@ class Parser {
           commands.push({cmd:"assign", variable:word.value, value: this.getExpression()})
         }
       } else if (this.currentToken().type === "label") {
+        program.labelTable[this.currentToken().value] = this.position
         this.position++
       } else if (this.currentToken().type === "control") {
         var token = this.currentToken()
@@ -97,6 +99,7 @@ class Parser {
 
   getAtomic() {
     var command = null
+    console.log("atomic",this.currentToken())
     if (this.currentToken().type === "word") {
       command = {type:"variable", value:this.currentToken().value}
     } else if (this.currentToken().type === "string") {
@@ -104,7 +107,21 @@ class Parser {
     } else if (this.currentToken().type === "number") {
       command = {type:"number", value:this.currentToken().value}
     } else if (this.currentToken().type === "function") {
-      //return {type:"function", value:currentToken.value}
+      var functionName = this.currentToken().value
+      this.position++
+      var params = []
+      while (this.currentToken() != undefined && this.currentToken().value != ")") {
+        if (this.currentToken().value === "(" || this.currentToken().value === ",") {
+          this.position++
+        } else {
+          var expression = this.getExpression()
+          if (expression !== null) {
+            params.push(expression)
+          }
+          console.log("Params",params)
+        }
+      }
+      command = {type:"function", name:functionName, params: params}
     } else if (this.currentToken().value === "(") {
       this.position++
       command = this.getExpression()

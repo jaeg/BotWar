@@ -32,8 +32,6 @@ class Tokenizer {
     var builtInfunctions = ["getX","getY","sin","cos","tan","rand"]
     var controlFunctions = ["if","endif","goto","print","move","else"]
 
-    var labelTable = []
-
     //Go through each line and create tokens.
     var tokenizedProgram = []
     var tempToken = ""
@@ -115,7 +113,6 @@ class Tokenizer {
               tempToken += chunk
             } else if (chunk === ":"){ //Colons indicate labels.
               tokenizedProgram.push(new Token(tempToken, "label"))
-              labelTable[tempToken] = tokenizedProgram.length - 1 //Label is at the end of the line already
               state = "search"
             } else {
               tokenizedProgram.push(new Token(tempToken, "word"))
@@ -127,8 +124,7 @@ class Tokenizer {
     }
 
     console.log("Program:",tokenizedProgram)
-    console.log("Labels:",labelTable)
-    return {tokens: tokenizedProgram, labels: labelTable}
+    return {tokens: tokenizedProgram}
   }
 }
 
