@@ -19,12 +19,12 @@
       top:
       if x < 1
       flip = 0
-      print bounce
+      print "bounce"
       endif
 
       if x > 299
       flip = 1
-      print bounce
+      print "bounce"
       endif
 
       if flip = 0
@@ -47,7 +47,8 @@
 
     <h3>Debug</h3>
     <div id="debug"></div>
-
+    <script src="parser.js"></script>
     <script src="tokenizer.js"></script>
+    <script src="interpreter.js"></script>
   </body>
 </html>

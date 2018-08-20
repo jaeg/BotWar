@@ -28,7 +28,9 @@ class Tokenizer {
     console.log("Raw input chunked and cleaned:",inputChunked)
 
     var state = "search" //state = string, number
-    var specialCharacters = ["=","+","-","*","/","<",">","(",")"]
+    var specialCharacters = ["=","+","-","*","/","<",">","(",")","!"]
+    var builtInfunctions = ["getX","getY","sin","cos","tan","rand"]
+    var controlFunctions = ["if","endif","goto","print","move","else"]
 
     var labelTable = []
 
@@ -42,14 +44,32 @@ class Tokenizer {
           case "search":
             tempToken = ""
             if (specialCharacters.indexOf(chunk) != -1) {
-              tokenizedProgram.push(new Token(chunk, "op"))
+              var type = "op"
+              if (chunk === "=") {
+                type = "equals"
+              }
+              if (chunk === "(" || chunk === ")") {
+                type = "paren"
+              }
+              if (chunk === "!") {
+                if (chunkI < inputChunked[lineI].length - 1) {
+                  if (specialCharacters.indexOf(inputChunked[lineI][chunkI+1]) != -1) {
+                    chunk += inputChunked[lineI][chunkI+1]
+                    chunkI++
+                  }
+                }
+              }
+              tokenizedProgram.push(new Token(chunk, type))
               break
             } else if (isNaN(chunk) === false) {
               state = "number"
               tempToken = chunk
             } else if (chunk === '"') {
                 state = "string"
-                tempToken = chunk
+            } else if (builtInfunctions.indexOf(chunk) != -1) {
+              tokenizedProgram.push(new Token(chunk, "function"))
+            } else if (controlFunctions.indexOf(chunk) != -1) {
+              tokenizedProgram.push(new Token(chunk, "control"))
             } else {
               state = "word"
               tempToken = chunk
@@ -84,7 +104,10 @@ class Tokenizer {
               tokenizedProgram.push(new Token(tempToken, "string"))
               state = "search"
             } else {
-              tempToken += " " + chunk
+              if (tempToken != "") {
+                tempToken += " "
+              }
+              tempToken += chunk
             }
           break;
           case "word":
@@ -105,6 +128,7 @@ class Tokenizer {
 
     console.log("Program:",tokenizedProgram)
     console.log("Labels:",labelTable)
+    return {tokens: tokenizedProgram, labels: labelTable}
   }
 }
 
@@ -120,8 +144,12 @@ function run() {
   clearOutput()
 
   var program = ide.value.split(/\r?\n/)
-  tokenizer = new Tokenizer()
-  tokenizer.tokenize(program)
+  var tokenizer = new Tokenizer()
+  tokenizedProgram = tokenizer.tokenize(program)
+  var parser = new Parser()
+  var parsed = parser.prepare(tokenizedProgram)
+  var interpreter = new Interpreter()
+  interpreter.run(parsed)
 }
 
 
