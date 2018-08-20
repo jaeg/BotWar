@@ -4,6 +4,8 @@ class Interpreter {
     this.variables = []
     this.controlTable = []
     this.position = 0
+    this.labelTable = []
+    this.commands = []
     this.controlTable["print"] = function(command) {
       if (command.value.type == "string" || command.value.type == "number") {
         console.log("Print",command.value.value)
@@ -11,6 +13,46 @@ class Interpreter {
         console.log("Print",that.variables[command.value.value])
       }else {
         console.log("Print",that.solve(command.value))
+      }
+    }
+
+    this.controlTable["endif"] = function(command){}
+
+    this.controlTable["if"] = function(command) {
+      var skip = 0
+      if (command.value.type == "number") {
+        if (parseInt(command.value.value) == 0) {
+          skip = 1
+        }
+      } else if (command.value.type == "variable") {
+        var v = that.variables[command.value.value]
+        if (v == 0) {
+          skip = 1
+        }
+      }else {
+        var v = that.solve(command.value)
+        if (v == 0) {
+          skip = 1
+        }
+      }
+
+      if (skip) {
+        that.position++
+        var skipNextEndIf = 0
+        while (that.position < that.commands.length - 1 && skip) {
+          var command = that.commands[that.position]
+          if (command.cmd === "if") {
+            skipNextEndIf++
+          }
+          if (command.cmd === "endif") {
+            if (skipNextEndIf > 0) {
+              skipNextEndIf--
+            } else {
+              skip = false
+            }
+          }
+          that.position++
+        }
       }
     }
 
@@ -57,13 +99,13 @@ class Interpreter {
 
   run(program) {
     console.log("Program",program)
-    var labels = program.labelTable
-    var commands = program.commands
+    this.labels = program.labelTable
+    this.commands = program.commands
     this.variables = []
     this.position = 0
 
-    for (this.position = 0; this.position < commands.length; this.position++) {
-      var command = commands[this.position]
+    for (this.position = 0; this.position < this.commands.length; this.position++) {
+      var command = this.commands[this.position]
       if (this.controlTable[command.cmd] != undefined) {
         this.controlTable[command.cmd](command)
       } else {
@@ -133,8 +175,33 @@ class Interpreter {
         case "*":
           result = left * right
         break
+
+        case "=":
+          result = left === right
+        break
+
+        case "<":
+          result = left < right
+        break
+
+        case ">":
+          result = left > right
+        break
+
+        case "!=":
+          result = left !== right
+        break
+
+        case "and":
+          result = left && right
+        break
+
+        case "or":
+          result = left || right
+        break
       }
     }
+
     return result
   }
 }
