@@ -41,8 +41,8 @@ class Interpreter {
         speed =that.solve(command.speed)
       }
 
-      that.robot.x += speed * Math.sin(direction * Math.PI / 180);
-      that.robot.y += speed * Math.cos(direction * Math.PI / 180);
+      that.robot.vX += parseFloat((speed * Math.sin(direction * Math.PI / 180)).toFixed(2));
+      that.robot.vY += parseFloat((speed * Math.cos(direction * Math.PI / 180)).toFixed(2));
       that.robot.direction = direction
     }
 
@@ -64,7 +64,6 @@ class Interpreter {
         }
       }
 
-
       if (skip) {
         that.position++
         var skipNextEndIf = 0
@@ -79,6 +78,8 @@ class Interpreter {
             } else {
               skip = false
             }
+          } else if (skipNextEndIf === 0 && command.cmd === "else") {
+            skip = false
           } else {
             that.position++
           }
@@ -87,6 +88,27 @@ class Interpreter {
     }
 
     this.controlTable["endif"] = function(command){}
+
+    this.controlTable["else"] = function(command){
+      that.position++
+      var skipNextEndIf = 0
+      var skip = true
+      while (that.position < that.commands.length - 1 && skip) {
+        var command = that.commands[that.position]
+        if (command.cmd === "if") {
+          skipNextEndIf++
+        }
+        if (command.cmd === "endif") {
+          if (skipNextEndIf > 0) {
+            skipNextEndIf--
+          } else {
+            skip = false
+          }
+        } else {
+          that.position++
+        }
+      }
+    }
 
 
     this.controlTable["assign"] = function(command) {

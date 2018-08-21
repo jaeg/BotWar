@@ -10,9 +10,12 @@ var ctx = canvas.getContext("2d");
 
 var engine = {
   robot: new Robot(""),
+  width: canvas.width,
+  height: canvas.height,
   init: function() {
     clearDebug()
     clearOutput()
+
 
     var program = ide.value.split(/\r?\n/)
 
@@ -21,7 +24,7 @@ var engine = {
     this.robot.start()
   },
   update: function() {
-
+    this.robot.update()
   },
   draw: function() {
 

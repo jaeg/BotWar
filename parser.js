@@ -53,7 +53,10 @@ class Parser {
             commands.push({type:"control", cmd:"endif"})
             this.position++
             break;
-
+          case "else":
+            commands.push({type:"control", cmd:"else"})
+            this.position++
+            break;
           case "move":
           this.position++
           var direction = this.getExpression()
