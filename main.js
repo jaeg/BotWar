@@ -1,5 +1,7 @@
 var outputDiv = document.getElementById('output')
 var debugDiv = document.getElementById('debug')
+var cpus = document.getElementById('cpus')
+var freq = document.getElementById('freq')
 var ide = document.getElementById('ide')
 var canvas = document.getElementById("main");
 canvas.width = canvas.clientWidth;
@@ -7,22 +9,22 @@ canvas.height = canvas.clientHeight;
 var ctx = canvas.getContext("2d");
 
 var engine = {
+  robot: new Robot(""),
   init: function() {
     clearDebug()
     clearOutput()
 
     var program = ide.value.split(/\r?\n/)
-    var tokenizer = new Tokenizer()
-    tokenizedProgram = tokenizer.tokenize(program)
-    var parser = new Parser()
-    var parsed = parser.prepare(tokenizedProgram)
-    this.interpreter = new Interpreter(parsed)
+
+    this.robot = new Robot(program, parseInt(cpus.value), parseInt(freq.value), 100, 75, 0)
+
+    this.robot.start()
   },
   update: function() {
-    this.interpreter.step()
+
   },
   draw: function() {
-    /*
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     ctx.strokeStyle = 'red'; // Stroke in white
@@ -35,21 +37,22 @@ var engine = {
     ctx.beginPath();
     ctx.moveTo(this.robot.x,this.robot.y);
     ctx.lineTo(aX,aY);
-    ctx.stroke();*/
+    ctx.stroke();
 
+  },
+  stop: function() {
+    this.robot.stop()
   }
 }
 
-var stop = false
 function run(){
+  engine.stop()
   engine.init()
-  stop = false
-  step()
 }
 
 
 function stopProgram(){
-  stop = true
+  engine.stop()
 }
 
 function errorOff(line) {
@@ -77,7 +80,7 @@ function addToDebug(text) {
 function step() {
   engine.update();
   engine.draw();
-  if (!stop) {
-    window.requestAnimationFrame(step);
-  }
+  window.requestAnimationFrame(step);
 }
+
+step()

@@ -15,28 +15,33 @@
     </canvas>
     <h3>IDE</h3>
     <textarea id="ide">
-      flip = 0
-      top:
-      if x < 1
-      flip = 0
-      print "bounce"
-      endif
+flip = 0
+top:
+  if getX() < 1
+    flip = 0
+    print "Bounce left:" + getX()
+  endif
 
-      if x > 299
-      flip = 1
-      print "bounce"
-      endif
+  if getX()> 299
+    flip = 1
+    print "Bounce righ:" + getX()
+  endif
 
-      if flip = 0
-      move 90 10
-      endif
+  if flip = 0
+    move 90 10
+  endif
 
-      if flip = 1
-      move 270 10
-      endif
+  if flip = 1
+    move 270 10
+  endif
 
-      goto top
+  goto top
     </textarea>
+    <div>
+      <h4>Robot Settings</h4>
+      CPUs: <input id="cpus" value="3"/>
+      Frequency: <input id="freq" value="500"/>
+    </div>
     <div>
       <button onclick="run()">Run</button>
       <button onclick="stopProgram()">Stop</button>
@@ -50,6 +55,7 @@
     <script src="parser.js"></script>
     <script src="tokenizer.js"></script>
     <script src="interpreter.js"></script>
+    <script src="robot.js"></script>
     <script src="main.js"></script>
   </body>
 </html>

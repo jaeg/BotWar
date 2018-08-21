@@ -1,13 +1,14 @@
 class Interpreter {
-  constructor(program) {
+  constructor(program, robot) {
     var that = this
+    this.robot = robot
     this.variables = []
     this.controlTable = []
     this.position = 0
     this.labelTable = []
     this.commands = []
+    this.errorState = ""
 
-    console.log("Program",program)
     this.labelTable = program.labelTable
     this.commands = program.commands
 
@@ -21,7 +22,29 @@ class Interpreter {
       }
     }
 
-    this.controlTable["endif"] = function(command){}
+    this.controlTable["move"] = function(command) {
+      var direction = 0
+      var speed = 0
+      if (command.direction.type == "number") {
+        direction = parseInt(command.direction.value)
+      } else if (command.direction.type == "variable") {
+        direction = that.variables[command.direction.value]
+      }else {
+        direction =that.solve(command.direction)
+      }
+
+      if (command.speed.type == "number") {
+        speed = parseInt(command.speed.value)
+      } else if (command.speed.type == "variable") {
+        speed = that.variables[command.speed.value]
+      }else {
+        speed =that.solve(command.speed)
+      }
+
+      that.robot.x += speed * Math.sin(direction * Math.PI / 180);
+      that.robot.y += speed * Math.cos(direction * Math.PI / 180);
+      that.robot.direction = direction
+    }
 
     this.controlTable["if"] = function(command) {
       var skip = 0
@@ -41,6 +64,7 @@ class Interpreter {
         }
       }
 
+
       if (skip) {
         that.position++
         var skipNextEndIf = 0
@@ -55,11 +79,15 @@ class Interpreter {
             } else {
               skip = false
             }
+          } else {
+            that.position++
           }
-          that.position++
         }
       }
     }
+
+    this.controlTable["endif"] = function(command){}
+
 
     this.controlTable["assign"] = function(command) {
       if (command.value.type == "string" || command.value.type == "number") {
@@ -80,7 +108,15 @@ class Interpreter {
 
     this.functionTable = []
     this.functionTable["getX"] = function(params) {
-      return 128
+      return that.robot.x
+    }
+
+    this.functionTable["getY"] = function(params) {
+      return that.robot.y
+    }
+
+    this.functionTable["getDir"] = function(params) {
+      return that.robot.direction
     }
 
     this.functionTable["sin"] = function(params) {
@@ -92,30 +128,65 @@ class Interpreter {
 
         return Math.sin(a)
       }
-      return "Not enough params"
+      throw "Not enough params"
+    }
+
+    this.functionTable["cos"] = function(params) {
+      if (params.length > 0) {
+        var a = params[0].value
+        if (params[0].type === "op") {
+           a = that.solve(params[0])
+        }
+
+        return Math.cos(a)
+      }
+      throw "Not enough params"
+    }
+
+    this.functionTable["rand"] = function(params) {
+      if (params.length > 1) {
+        var a = params[0].value
+        if (params[0].type === "op") {
+           a = that.solve(params[0])
+        }
+
+        var b = params[1].value
+        if (params[1].type === "op") {
+           b = that.solve(params[1])
+        }
+        a = parseInt(a)
+        b = parseInt(b)
+
+        var results = Math.floor(Math.random() * b) + a
+        return results
+      }
+      throw "Not enough params"
     }
   }
 
-  run() {
-    for (this.position = 0; this.position < this.commands.length; this.position++) {
-      var command = this.commands[this.position]
-      if (this.controlTable[command.cmd] != undefined) {
-        this.controlTable[command.cmd](command)
-      } else {
-        console.log("Runtime Error")
-      }
-    }
+  restart() {
+    this.variables = []
+    this.position = 0
+    this.errorState = ""
   }
 
   step() {
-    if (this.position < this.commands.length) {
-      var command = this.commands[this.position]
-      if (this.controlTable[command.cmd] != undefined) {
-        this.controlTable[command.cmd](command)
-      } else {
-        console.log("Runtime Error")
+    if (this.errorState === "") {
+      if (this.position < this.commands.length) {
+        var command = this.commands[this.position]
+        if (this.controlTable[command.cmd] != undefined) {
+          try {
+            this.controlTable[command.cmd](command)
+          } catch (e) {
+            console.log(e)
+            this.errorState = e
+          }
+        } else {
+          console.log("Runtime Error")
+          this.errorState = e
+        }
+        this.position++
       }
-      this.position++
     }
   }
 

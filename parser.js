@@ -25,7 +25,7 @@ class Parser {
           commands.push({cmd:"assign", variable:word.value, value: this.getExpression()})
         }
       } else if (this.currentToken().type === "label") {
-        program.labelTable[this.currentToken().value] = this.position
+        program.labelTable[this.currentToken().value] = commands.length
         this.position++
       } else if (this.currentToken().type === "control") {
         var token = this.currentToken()
@@ -64,7 +64,6 @@ class Parser {
           default: this.position++
         }
       } else {
-        console.log(commands)
         return "Error, cannot compile: " + this.position + ":" + this.currentToken().type + ":" + this.currentToken().value
       }
     }
@@ -117,7 +116,6 @@ class Parser {
           if (expression !== null) {
             params.push(expression)
           }
-          console.log("Params",params)
         }
       }
       command = {type:"function", name:functionName, params: params}
