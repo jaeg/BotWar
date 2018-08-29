@@ -1,22 +1,33 @@
 {
-  "name": "botwar",
-  "version": "1.0.0",
-  "description": "JS13k project",
+  "name": "js13kserver",
+  "version": "1.0.2",
+  "description": "js13kgames game jam server",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "dev": "live-server"
+    "start": "node index.js",
+    "test": "mocha test"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jaeg/BotWar.git"
+  "keywords": [
+    "js13kgames",
+    "server"
+  ],
+  "engines": {
+    "node": "8.*"
   },
-  "author": "John Godsey",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/jaeg/BotWar/issues"
+  "dependencies": {
+    "archiver": "^2.1.1",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.0",
+    "express-session": "^1.15.6",
+    "mysql2": "^1.5.3",
+    "pg": "^7.4.3",
+    "pg-hstore": "^2.3.2",
+    "sequelize": "^4.38.0",
+    "socket.io": "^2.1.0",
+    "sqlite3": "^4.0.1"
   },
-  "homepage": "https://github.com/jaeg/BotWar#readme",
   "devDependencies": {
-    "live-server": "^1.2.0"
+    "mocha": "^5.2.0"
   }
 }
