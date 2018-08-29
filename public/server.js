@@ -6,6 +6,9 @@
  */
 const users = [];
 
+function removeUser(user) {
+	users.splice(users.indexOf(user), 1);
+}
 /**
  * User session class
  */
@@ -32,25 +35,14 @@ module.exports = {
 	io: (socket) => {
 		const user = new User(socket);
 		users.push(user);
-		findOpponent(user);
+
 
 		socket.on("disconnect", () => {
 			console.log("Disconnected: " + socket.id);
 			removeUser(user);
 			if (user.opponent) {
 				user.opponent.end();
-				findOpponent(user.opponent);
-			}
-		});
 
-		socket.on("guess", (guess) => {
-			console.log("Guess: " + socket.id);
-			if (user.setGuess(guess) && user.game.ended()) {
-				user.game.score();
-				user.game.start();
-				storage.get('games', 0).then(games => {
-					storage.set('games', games + 1);
-				});
 			}
 		});
 
