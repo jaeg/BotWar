@@ -15,53 +15,42 @@
     var ctx = canvas.getContext("2d");
 
     var engine = {
-      robot: new Robot(""),
+      robots: [],
       width: canvas.width,
       height: canvas.height,
       init: function() {
         clearDebug()
         clearOutput()
-
-
-        var program = ide.value.split(/\r?\n/)
-
-        this.robot = new Robot(program, parseInt(cpus.value), parseInt(freq.value), 100, 75, 0, this)
-
-        this.robot.start()
-      },
-      update: function() {
-        this.robot.update()
       },
       draw: function() {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        ctx.strokeStyle = 'red'; // Stroke in white
-        ctx.beginPath();
-        ctx.arc(this.robot.x, this.robot.y, 5, 0, 2 * Math.PI);
-        ctx.stroke();
+        for (var i = 0; i < this.robots.length; i++) {
+          var robot = this.robots[i]
+          ctx.strokeStyle = 'red'; // Stroke in white
+          ctx.beginPath();
+          ctx.arc(robot.x, robot.y, 5, 0, 2 * Math.PI);
+          ctx.stroke();
 
-        var aX = this.robot.x + 6 * Math.sin(this.robot.direction * Math.PI / 180);
-        var aY = this.robot.y + 6 * Math.cos(this.robot.direction * Math.PI / 180);
-        ctx.beginPath();
-        ctx.moveTo(this.robot.x,this.robot.y);
-        ctx.lineTo(aX,aY);
-        ctx.stroke();
+          var aX = robot.x + 6 * Math.sin(robot.direction * Math.PI / 180);
+          var aY = robot.y + 6 * Math.cos(robot.direction * Math.PI / 180);
+          ctx.beginPath();
+          ctx.moveTo(robot.x,robot.y);
+          ctx.lineTo(aX,aY);
+          ctx.stroke();
+        }
 
-      },
-      stop: function() {
-        this.robot.stop()
       }
     }
 
     function run(){
-      engine.stop()
-      engine.init()
+      socket.emit("run")
     }
 
 
     function stopProgram(){
-      engine.stop()
+      socket.emit("stop")
     }
 
     function errorOff(line) {
@@ -86,62 +75,27 @@
     }
 
 
-    function step() {
-      engine.update();
-      engine.draw();
-      window.requestAnimationFrame(step);
-    }
-
     function bind() {
-
-        socket.on("start", () => {
-            enableButtons();
-            setMessage("Round " + (points.win + points.lose + points.draw + 1));
-        });
-
-        socket.on("win", () => {
-            points.win++;
-            displayScore("You win!");
-        });
-
-        socket.on("lose", () => {
-            points.lose++;
-            displayScore("You lose!");
-        });
-
-        socket.on("draw", () => {
-            points.draw++;
-            displayScore("Draw!");
-        });
-
-        socket.on("end", () => {
-            disableButtons();
-            setMessage("Waiting for opponent...");
-        });
-
         socket.on("connect", () => {
-            disableButtons();
-            setMessage("Waiting for opponent...");
+
         });
 
         socket.on("disconnect", () => {
-            disableButtons();
-            setMessage("Connection lost!");
+
         });
 
         socket.on("error", () => {
-            disableButtons();
-            setMessage("Connection error!");
+
         });
 
-        for (let i = 0; i < buttons.length; i++) {
-            ((button, guess) => {
-                button.addEventListener("click", function (e) {
-                    disableButtons();
-                    socket.emit("guess", guess);
-                }, false);
-            })(buttons[i], i + 1);
-        }
+        socket.on("message", (message) => {
+          addToOutput(message)
+        });
+
+        socket.on("update", (robots) => {
+          engine.robots = robots
+          engine.draw()
+        })
     }
 
     /**
@@ -149,7 +103,6 @@
      */
     function init() {
         socket = io({ upgrade: false, transports: ["websocket"] });
-        step();
     }
 
     window.addEventListener("load", init, false);
