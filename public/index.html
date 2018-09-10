@@ -1,20 +1,25 @@
 <html>
-  <head>
-    <title>BotWar</title>
-    <style>
-      #ide {
-        font-family: "Courier New", Courier, monospace;
-        font-size: 16px;
-        width: 100%;
-        height: 50%;
-      }
-    </style>
-  </head>
-  <body>
-    <canvas id="main">
-    </canvas>
-    <h3>IDE</h3>
-    <textarea id="ide">
+   <head>
+      <title>BotWar</title>
+      <style>
+         #ide {
+         font-family: "Courier New", Courier, monospace;
+         font-size: 16px;
+         width: 100%;
+         height: 50%;
+         }
+      </style>
+   </head>
+   <body>
+     <div id="notInRoom" style="">
+       <input id="roomName"/>
+       <button onclick="createRoom()">Create and Join</button>
+     </div>
+      <div id="inRoom" style="display:none">
+         <canvas id="main">
+         </canvas>
+         <h3>IDE</h3>
+         <textarea id="ide">
 flip = 0
 top:
   if getX() < 1
@@ -36,25 +41,24 @@ top:
   endif
 
   goto top
-    </textarea>
-    <div>
-      <h4>Robot Settings</h4>
-      CPUs: <input id="cpus" value="3"/>
-      Frequency: <input id="freq" value="500"/>
-    </div>
-    <div>
-      <button onclick="run()">Run</button>
-      <button onclick="stopProgram()">Stop</button>
-    </div>
-
-    <h3>Output</h3>
-    <div id="output"></div>
-
-    <h3>Debug</h3>
-    <div id="debug"></div>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/shared.js"></script>
-    <script src="/client.js"></script>
-
-  </body>
+      </textarea>
+         <div>
+            <h4>Robot Settings</h4>
+            CPUs: <input id="cpus" value="3"/>
+            Frequency: <input id="freq" value="1"/>
+            <button onclick="addRobot()">Add Robot</button>
+         </div>
+         <div>
+            <button onclick="run()">Run</button>
+            <button onclick="stopProgram()">Stop</button>
+         </div>
+         <h3>Output</h3>
+         <div id="output"></div>
+         <h3>Debug</h3>
+         <div id="debug"></div>
+      </div>
+      <script src="/socket.io/socket.io.js"></script>
+      <script src="/shared.js"></script>
+      <script src="/client.js"></script>
+   </body>
 </html>

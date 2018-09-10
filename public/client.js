@@ -1,6 +1,6 @@
 "use strict";
 
-(function () {
+
 
     let socket
 
@@ -10,8 +10,8 @@
     var freq = document.getElementById('freq')
     var ide = document.getElementById('ide')
     var canvas = document.getElementById("main");
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    canvas.width = 640;
+    canvas.height = 480;
     var ctx = canvas.getContext("2d");
 
     var engine = {
@@ -45,7 +45,11 @@
     }
 
     function run(){
-      socket.emit("run")
+      socket.emit("start")
+    }
+
+    function addRobot(){
+      socket.emit("addRobot",ide.value,cpus.value,freq.value)
     }
 
 
@@ -74,10 +78,17 @@
       debugDiv.innerHTML += text
     }
 
+    function createRoom() {
+      var roomName = document.getElementById("roomName").value
+      if (roomName !== "") {
+        socket.emit("createRoom", roomName, true);
+      }
+    }
+
 
     function bind() {
         socket.on("connect", () => {
-
+          console.log("Testtt")
         });
 
         socket.on("disconnect", () => {
@@ -92,10 +103,26 @@
           addToOutput(message)
         });
 
+        socket.on("createdRoom", (name) => {
+          console.log(name)
+          socket.emit("enterRoom", name)
+        });
+
+        socket.on("enteredRoom", (name) => {
+          console.log("Entered",name)
+          document.getElementById("notInRoom").style.display="none";
+          document.getElementById("inRoom").style.display="block";
+        });
+
+        socket.on("leftRoom", (name) => {
+          document.getElementById("notInRoom").style.display="block";
+          docuemnt.getElementById("inRoom").style.display="none";
+        });
+
         socket.on("update", (robots) => {
           engine.robots = robots
           engine.draw()
-        })
+        });
     }
 
     /**
@@ -103,8 +130,7 @@
      */
     function init() {
         socket = io({ upgrade: false, transports: ["websocket"] });
+        bind()
     }
 
     window.addEventListener("load", init, false);
-
-})();

@@ -313,7 +313,6 @@ class Interpreter {
 
 class Tokenizer {
   tokenize(input) {
-    console.log("Raw input:",input)
     //Clean up input and chunk it apart.
     var inputChunked = []
     for (var lineI = 0; lineI < input.length; lineI++) {
@@ -334,7 +333,7 @@ class Tokenizer {
       }
     }
 
-    console.log("Raw input chunked and cleaned:",inputChunked)
+
 
     var state = "search" //state = string, number
     var specialCharacters = ["=","+","-","*","/","<",">","(",")","!"]
@@ -432,7 +431,7 @@ class Tokenizer {
       }
     }
 
-    console.log("Program:",tokenizedProgram)
+
     return {tokens: tokenizedProgram}
   }
 }
@@ -452,7 +451,7 @@ class Robot {
     var parser = new Parser()
     var parsed = parser.prepare(tokenizedProgram)
     this.interpreter = new Interpreter(parsed, this)
-    console.log(this.interpreter)
+
 
     this.cpu = cpu
     this.clock = clock
@@ -479,10 +478,9 @@ class Robot {
   }
 
   update() {
-    if (this.stop === false) {
+    if (this.stopped === false) {
       this.cycle++
     }
-
     if (this.cycle >= this.clock) {
       this.process()
       this.cycle = 0
@@ -723,6 +721,7 @@ class Room {
 	constructor(owner, locked) {
 		this.owner = owner
 		this.locked = locked
+    this.users = []
 		this.users = [owner]
 		this.robots = []
 		this.width = 400
@@ -743,7 +742,7 @@ class Room {
 
   stop(user) {
     if (user === this.owner) {
-      this.running = true
+      this.running = false
       for (var i = 0; i < this.users.length; i++) {
         this.users[i].socket.emit("message", "Simulation stoped")
       }
@@ -753,9 +752,12 @@ class Room {
   }
 
 	update() {
-    for (var i = 0; i < this.robots.length; i++) {
-      this.robots[i].update()
+    if (this.running) {
+      for (var i = 0; i < this.robots.length; i++) {
+        this.robots[i].update()
+      }
     }
+
 	}
 
 	addUser(user) {
@@ -791,17 +793,20 @@ module.exports = {
 		})
 
 		socket.on("createRoom", (name, locked) => {
+      console.log(name)
 			rooms[name] = new Room(user, locked)
 			socket.emit("createdRoom", name);
 		});
 
 		socket.on("enterRoom", (name) => {
-			if (rooms[name].locked === false) {
+      console.log("enter",name)
+			if (rooms[name].locked === false || rooms[name].owner === user) {
 				rooms[name].addUser(user)
 				user.currentRoom = name
 				socket.emit("enteredRoom", name);
 			} else {
 				socket.emit("roomLocked", name);
+        console.log("locked")
 			}
 		});
 
@@ -810,6 +815,27 @@ module.exports = {
 			user.currentRoom = null
 			socket.emit("leftRoom", name);
 		});
+
+    socket.on("start", () => {
+      if (rooms[user.currentRoom] !== null) {
+        rooms[user.currentRoom].start(user)
+      }
+    })
+
+    socket.on("stop", () => {
+      if (rooms[user.currentRoom] !== null) {
+        rooms[user.currentRoom].stop(user)
+      }
+    })
+
+    socket.on("addRobot",(program,cpu,clock) => {
+      if (user.currentRoom != null) {
+        var splitProgram = program.split(/\r?\n/)
+        var robot = new Robot(splitProgram, cpu, clock, 150, 150, 0, rooms[user.currentRoom])
+        rooms[user.currentRoom].robots.push(robot)
+        socket.emit("message","robot added")
+      }
+    })
 
 		console.log("Connected: " + socket.id);
 	},
@@ -820,13 +846,17 @@ module.exports = {
 
 function update() {
 	for (var room in rooms) {
-		if (room.users.length > 0) {
-			room.update()
+      if (rooms[room].users.length > 0) {
+        rooms[room].update()
 
-			for (var i = 0; i < room.users.length; i++) {
-				room.users[i].socket.emit("update", room.robots)
-			}
-		}
+        for (var i = 0; i < rooms[room].users.length; i++) {
+          var robots = []
+          for (var index in rooms[room].robots) {
+            robots.push({x:rooms[room].robots[index].x, y:rooms[room].robots[index].y, direction:rooms[room].robots[index].direction})
+          }
+          rooms[room].users[i].socket.emit("update", robots)
+        }
+      }
 	}
 
 	setTimeout(update, 100)
