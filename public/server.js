@@ -778,8 +778,9 @@ class Room {
 
 	removeUser(user) {
 		if (this.users.indexOf(user) != -1) {
-			this.users.slice(this.users.indexOf(user))
+			this.users = this.users.slice(this.users.indexOf(user)+1)
 		}
+    console.log(this.users.indexOf(user))
 	}
 }
 
@@ -824,10 +825,10 @@ module.exports = {
 		});
 
 		socket.on("leaveRoom", (name) => {
-      if (rooms[name] != undefined) {
-  			rooms[name].removeUser(user)
-  			user.currentRoom = null
-  			socket.emit("leftRoom", name);
+      if (user.currentRoom != null) {
+        rooms[user.currentRoom].removeUser(user)
+        user.currentRoom = null
+        socket.emit("leftRoom");
       }
 		});
 

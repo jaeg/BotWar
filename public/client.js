@@ -92,6 +92,10 @@
       }
     }
 
+    function leaveRoom() {
+      socket.emit("leaveRoom")
+    }
+
 
     function bind() {
         socket.on("connect", () => {
@@ -122,7 +126,7 @@
 
         socket.on("leftRoom", (name) => {
           document.getElementById("notInRoom").style.display="block";
-          docuemnt.getElementById("inRoom").style.display="none";
+          document.getElementById("inRoom").style.display="none";
         });
 
         socket.on("update", (robots) => {
