@@ -21,11 +21,17 @@ class Interpreter {
 
     this.controlTable["print"] = function(command) {
       if (command.value.type == "string" || command.value.type == "number") {
-        addToOutput(command.value.value)
+        for (var user in that.robot.room.users) {
+            that.robot.room.users[user].socket.emit("message",command.value.value)
+        }
       } else if (command.value.type == "variable") {
-        addToOutput(that.variables[command.value.value])
+        for (var user in that.robot.room.users) {
+            that.robot.room.users[user].socket.emit("message",that.variables[command.value.value])
+        }
       }else {
-        addToOutput(that.solve(command.value))
+        for (var user in that.robot.room.users) {
+            that.robot.room.users[user].socket.emit("message",that.solve(command.value))
+        }
       }
     }
 
@@ -450,7 +456,11 @@ class Robot {
     var tokenizedProgram = tokenizer.tokenize(program)
     var parser = new Parser()
     var parsed = parser.prepare(tokenizedProgram)
-    this.interpreter = new Interpreter(parsed, this)
+    if (typeof parsed !== "string") {
+      this.interpreter = new Interpreter(parsed, this)
+    } else {
+      this.stopped = true
+    }
 
 
     this.cpu = cpu
@@ -722,7 +732,7 @@ class Room {
 		this.owner = owner
 		this.locked = locked
     this.users = []
-		this.users = [owner]
+		this.users = []
 		this.robots = []
 		this.width = 400
 		this.height = 400
@@ -761,7 +771,7 @@ class Room {
 	}
 
 	addUser(user) {
-		if (this.users.indexOf(user) != -1 && this.locked === false) {
+		if (this.users.indexOf(user) === -1 && this.locked === false) {
 					this.users.push(user)
 		}
 	}
@@ -799,33 +809,40 @@ module.exports = {
 		});
 
 		socket.on("enterRoom", (name) => {
-      console.log("enter",name)
-			if (rooms[name].locked === false || rooms[name].owner === user) {
-				rooms[name].addUser(user)
-				user.currentRoom = name
-				socket.emit("enteredRoom", name);
-			} else {
-				socket.emit("roomLocked", name);
-        console.log("locked")
-			}
+      console.log(name)
+      if (rooms[name] != undefined) {
+        if (rooms[name].locked === false || rooms[name].owner === user) {
+          rooms[name].addUser(user)
+          user.currentRoom = name
+          socket.emit("enteredRoom", name);
+          console.log("Entered")
+        } else {
+          socket.emit("alert", name + " : locked");
+          console.log("Locked")
+        }
+      }
 		});
 
 		socket.on("leaveRoom", (name) => {
-			rooms[name].removeUser(user)
-			user.currentRoom = null
-			socket.emit("leftRoom", name);
+      if (rooms[name] != undefined) {
+  			rooms[name].removeUser(user)
+  			user.currentRoom = null
+  			socket.emit("leftRoom", name);
+      }
 		});
 
     socket.on("start", () => {
-      if (rooms[user.currentRoom] !== null) {
-        rooms[user.currentRoom].start(user)
-      }
+        if (rooms[user.currentRoom] !== null) {
+          rooms[user.currentRoom].start(user)
+        }
+
     })
 
     socket.on("stop", () => {
-      if (rooms[user.currentRoom] !== null) {
-        rooms[user.currentRoom].stop(user)
-      }
+        if (rooms[user.currentRoom] !== null) {
+          rooms[user.currentRoom].stop(user)
+        }
+
     })
 
     socket.on("addRobot",(program,cpu,clock) => {
@@ -845,10 +862,9 @@ module.exports = {
 };
 
 function update() {
-	for (var room in rooms) {
+  for (var room in rooms) {
       if (rooms[room].users.length > 0) {
         rooms[room].update()
-
         for (var i = 0; i < rooms[room].users.length; i++) {
           var robots = []
           for (var index in rooms[room].robots) {
@@ -857,9 +873,24 @@ function update() {
           rooms[room].users[i].socket.emit("update", robots)
         }
       }
-	}
+  }
 
 	setTimeout(update, 100)
 }
 
+function availableRoomUpdater() {
+  var availableRooms = []
+  for (var room in rooms) {
+      if (rooms[room].users.length > 0) {
+        availableRooms.push(room)
+        }
+  }
+
+  for (var id in users) {
+    users[id].socket.emit("availableRooms",availableRooms)
+  }
+  setTimeout(availableRoomUpdater, 1000)
+}
+
 setTimeout(update, 100)
+setTimeout(availableRoomUpdater, 100)

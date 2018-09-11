@@ -81,14 +81,20 @@
     function createRoom() {
       var roomName = document.getElementById("roomName").value
       if (roomName !== "") {
-        socket.emit("createRoom", roomName, true);
+        socket.emit("createRoom", roomName, false);
+      }
+    }
+
+    function joinRoom(room) {
+      if (room !== "") {
+        socket.emit("enterRoom", room)
+        console.log(room)
       }
     }
 
 
     function bind() {
         socket.on("connect", () => {
-          console.log("Testtt")
         });
 
         socket.on("disconnect", () => {
@@ -123,6 +129,18 @@
           engine.robots = robots
           engine.draw()
         });
+
+        socket.on("alert",(msg) => {
+          alert(msg)
+        })
+
+        socket.on("availableRooms", (rooms) => {
+          var roomsDiv = document.getElementById("rooms");
+          roomsDiv.innerHTML = ""
+          for (var room in rooms) {
+            roomsDiv.innerHTML += "<li>"+rooms[room]+"   <button onclick='joinRoom(\""+rooms[room]+"\")'>join</button></li>"
+          }
+        })
     }
 
     /**
