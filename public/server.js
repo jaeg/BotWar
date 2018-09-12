@@ -190,8 +190,6 @@ class Interpreter {
           direction = that.variables[params[0].value]
         }
 
-        console.log(direction)
-
         var p1 = {x:that.robot.x, y:that.robot.y}
 
         var aX = that.robot.x + 100 * Math.sin(direction * Math.PI / 180);
@@ -942,13 +940,16 @@ module.exports = {
     })
 
 		socket.on("createRoom", (name, locked) => {
-      console.log(name)
-			rooms[name] = new Room(user, locked)
-			socket.emit("createdRoom", name);
+      if (name !== "") {
+        rooms[name] = new Room(user, locked)
+        socket.emit("createdRoom", name);
+      } else {
+        socket.emit("alert","No room name specified.")
+      }
+
 		});
 
 		socket.on("enterRoom", (name) => {
-      console.log(name)
       if (rooms[name] != undefined) {
         if (rooms[name].locked === false || rooms[name].owner === user) {
           rooms[name].addUser(user)

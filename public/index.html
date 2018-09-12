@@ -57,7 +57,7 @@
             <div style="width:98%"><h3 class="rightAlign">Robot Settings</h3></div>
             <label>Name:</label> <input id="name" value="Default"/>
             <label>Commands Per Cycle:</label> <input id="cpus" value="3"/>
-            <label>Cycle Delay:</label> <input id="freq" value="1"/>
+            <label>Cycle Delay:</label> <input id="freq" value="10"/>
             <button onclick="addRobot()">Add Robot</button>
          </div>
          <div class="roomFunctions">
@@ -74,7 +74,21 @@
       <div class="right">
       <div class="programEditor">
          <h3 class="center">Program Editor</h3>
-         <textarea id="ide"></textarea>
+         <textarea id="ide">
+dir = 0
+top:
+	if (scan(dir) > 0)
+		shoot dir
+	else
+		dir = dir + 30
+		move dir 5
+	endif
+
+	if (dir > 360)
+		dir = 0
+	endif
+goto top
+         </textarea>
       </div>
       <div class="messages">
          <h3 class="center">Messages</h3>

@@ -99,6 +99,8 @@
       var roomName = document.getElementById("roomName").value
       if (roomName !== "") {
         socket.emit("createRoom", roomName, false);
+      } else {
+        alert("Please provide a room name.")
       }
     }
 
