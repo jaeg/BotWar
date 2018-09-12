@@ -9,6 +9,9 @@
     var ide = document.getElementById('ide')
     var canvas = document.getElementById("main");
     var ctx = canvas.getContext("2d");
+    ctx.translate(0.5, 0.5);
+
+    var colors = ['#882000', '#68d0a8', '#a838a0', '#50b818', '#181090','#f0e858','#a04800','#472b1b', '#c87870', '#98ff98', '#5090d0']
 
     var engine = {
       robots: [],
@@ -19,12 +22,15 @@
         clearOutput()
       },
       draw: function() {
-
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         for (var i = 0; i < this.robots.length; i++) {
           var robot = this.robots[i]
-          ctx.strokeStyle = 'red'; // Stroke in white
+          var colorI = i
+          if (colorI > colors.length - 1) {
+            colorI = colorI % colors.length
+          }
+          ctx.strokeStyle = colors[colorI]
           ctx.beginPath();
           ctx.arc(robot.x, robot.y, robot.size, 0, 2 * Math.PI);
           ctx.stroke();
@@ -35,6 +41,10 @@
           ctx.moveTo(robot.x,robot.y);
           ctx.lineTo(aX,aY);
           ctx.stroke();
+
+          ctx.font = "8px Courier New";
+          ctx.fillStyle = "white"
+          ctx.fillText(robot.name + " : " + robot.energy,robot.x - robot.size,robot.y - robot.size - 5);
         }
 
       }
@@ -54,6 +64,14 @@
 
     function stopProgram(){
       socket.emit("stop")
+    }
+
+    function closeInstructions() {
+      document.getElementById("instructions").style.display="none";
+    }
+
+    function openInstructions() {
+      document.getElementById("instructions").style.display="block";
     }
 
     function errorOff(line) {
@@ -145,6 +163,9 @@
         socket.on("availableRooms", (rooms) => {
           var roomsDiv = document.getElementById("rooms");
           roomsDiv.innerHTML = "<tr><th>Name</th><th>Number of Users</th><th></th></tr>"
+          if (rooms.length === 0) {
+            roomsDiv.innerHTML += "<tr><td colspan='3'> Data Unavailable.</td></tr>"
+          }
           for (var i in rooms) {
             var room = rooms[i]
             roomsDiv.innerHTML += "<tr><td>"+room.name + "</td><td>" + room.numUsers + "</td><td>   <button onclick='joinRoom(\""+room.name+"\")'>join</button></td></tr>"

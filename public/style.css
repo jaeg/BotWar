@@ -6,6 +6,13 @@ height: 100%;
 z-index:0
 }
 
+textarea,
+pre {
+    -moz-tab-size : 4;
+      -o-tab-size : 4;
+         tab-size : 4;
+}
+
 #ide {
   font-family: "Courier New", Courier, monospace;
   font-size: 16px;
@@ -106,6 +113,8 @@ button {
  font-family: "Courier New", Courier, monospace;
  font-size: 16px;
  padding: 5px 20px 5px 20px;
+ margin-bottom: 10px;
+ margin-left: 10px;
 }
 
 .rightAlign:after {
@@ -140,6 +149,18 @@ button {
   text-align: center;
 }
 
+.instructions {
+  width: 60%;
+  position: absolute;
+  z-index: 2;
+  left: 20%;
+  top: 20%;
+  background-color:#ABABAB;
+  border-style:solid;
+  border-width: 8px;
+  border-color: #3E31A2;
+  background-color: #ABABAB;
+}
 
 .arena {
   background-color:black;
@@ -209,4 +230,5 @@ button {
   border-left-color: #3E31A2;
   display: inline-block;
   overflow: scroll;
+
 }

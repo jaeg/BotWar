@@ -549,7 +549,7 @@ class Robot {
     }
 
     this.size = 5
-    this.energy = 10
+    this.energy = 50
     this.name = name || "Default"
 
 
@@ -583,6 +583,7 @@ class Robot {
     }
     if (this.cycle >= this.clock) {
       this.process()
+      this.energy--
       this.cycle = 0
     }
 
@@ -593,6 +594,10 @@ class Robot {
       for (var i = 0; i < room.users.length; i++) {
         room.users[i].socket.emit("message", this.name + " has been taken offline!")
       }
+      var that = this
+      setTimeout(function() {
+        that.room.robots.splice(that.room.robots.indexOf(that), 1);
+      }, 1000)
     }
     //Add velocity
     this.x += this.vX
@@ -811,7 +816,7 @@ class Parser {
  * @param {Array} users
  */
 const users = [];
-const rooms = []
+var rooms = []
 
 function removeUser(user) {
 	users.splice(users.indexOf(user), 1);
@@ -842,8 +847,8 @@ class Room {
     this.users = []
 		this.users = []
 		this.robots = []
-		this.width = 400
-		this.height = 400
+		this.width = 600
+		this.height = 300
     this.running = false
 	}
 
@@ -892,7 +897,14 @@ class Room {
 		if (this.users.indexOf(user) != -1) {
 			this.users = this.users.slice(this.users.indexOf(user)+1)
 		}
-    console.log(this.users.indexOf(user))
+    var that = this
+    if (this.users.length === 0) {
+      setTimeout(function() {
+        if (that.users.length === 0) {
+          rooms = rooms.slice(rooms.indexOf(that)+1)
+        }
+      },5000)
+    }
 	}
 }
 
@@ -924,7 +936,7 @@ module.exports = {
           rooms[user.currentRoom].clear()
           socket.emit("message","Cleared room")
         } else {
-          socket.emit("alert", name + " : not owner");
+          socket.emit("alert", "not owner");
         }
       }
     })
@@ -1028,7 +1040,8 @@ function update() {
         for (var i = 0; i < rooms[room].users.length; i++) {
           var robots = []
           for (var index in rooms[room].robots) {
-            robots.push({x:rooms[room].robots[index].x, y:rooms[room].robots[index].y, direction:rooms[room].robots[index].direction, size:rooms[room].robots[index].size})
+            var robot = rooms[room].robots[index]
+            robots.push({x:robot.x, y:robot.y, direction:robot.direction, size:robot.size, name: robot.name, energy: robot.energy})
           }
           rooms[room].users[i].socket.emit("update", robots)
         }
