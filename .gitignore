@@ -2,4 +2,5 @@
 /.idea
 /.vscode
 /dist.zip
+/dist
 *.sqlite

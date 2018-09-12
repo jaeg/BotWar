@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "mocha test"
+    "test": "mocha test",
+    "compress": "cp public dist -r | terser public/client.js -o dist/client.js --compress --mangle | terser public/server.js -o dist/server.js --compress --mangle"
   },
   "keywords": [
     "js13kgames",
@@ -25,7 +26,8 @@
     "pg-hstore": "^2.3.2",
     "sequelize": "^4.38.0",
     "socket.io": "^2.1.0",
-    "sqlite3": "^4.0.1"
+    "sqlite3": "^4.0.1",
+    "terser": "^3.8.2"
   },
   "devDependencies": {
     "mocha": "^5.2.0"
