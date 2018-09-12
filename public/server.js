@@ -181,8 +181,16 @@ class Interpreter {
     this.functionTable = []
     this.functionTable["scan"] = function(params) {
       if (params.length === 1) {
-
         var direction = params[0].value
+        if (params[0].type === "op") {
+           direction = that.solve(params[0])
+        }
+
+        if (params[0].type == "variable") {
+          direction = that.variables[params[0].value]
+        }
+
+        console.log(direction)
 
         var p1 = {x:that.robot.x, y:that.robot.y}
 
@@ -196,9 +204,7 @@ class Interpreter {
             continue;
           }
           var circle = {center:{x:robots[i].x, y:robots[i].y}, radius: robots[i].size}
-          console.log(circle, {p1:p1, p2:p2})
           var points = inteceptCircleLineSeg(circle, {p1:p1, p2:p2})
-          console.log(points)
           if (points.length > 0) {
             return 1
           }
@@ -226,6 +232,10 @@ class Interpreter {
            a = that.solve(params[0])
         }
 
+        if (params[0].type == "variable") {
+          a = that.variables[params[0].value]
+        }
+
         return Math.sin(a)
       }
       throw "Not enough params"
@@ -236,6 +246,10 @@ class Interpreter {
         var a = params[0].value
         if (params[0].type === "op") {
            a = that.solve(params[0])
+        }
+
+        if (params[0].type == "variable") {
+          a = that.variables[params[0].value]
         }
 
         return Math.cos(a)
@@ -250,9 +264,16 @@ class Interpreter {
            a = that.solve(params[0])
         }
 
+        if (params[0].type == "variable") {
+          a = that.variables[params[0].value]
+        }
+
         var b = params[1].value
         if (params[1].type === "op") {
            b = that.solve(params[1])
+        }
+        if (params[1].type == "variable") {
+          b = that.variables[params[1].value]
         }
         a = parseInt(a)
         b = parseInt(b)
