@@ -22,17 +22,54 @@ class Interpreter {
     this.controlTable["print"] = function(command) {
       if (command.value.type == "string" || command.value.type == "number") {
         for (var user in that.robot.room.users) {
-            that.robot.room.users[user].socket.emit("message",command.value.value)
+            that.robot.room.users[user].socket.emit("message",that.robot.name + ":" + command.value.value)
         }
       } else if (command.value.type == "variable") {
         for (var user in that.robot.room.users) {
-            that.robot.room.users[user].socket.emit("message",that.variables[command.value.value])
+            that.robot.room.users[user].socket.emit("message",that.robot.name + ":" + that.variables[command.value.value])
         }
       }else {
         for (var user in that.robot.room.users) {
-            that.robot.room.users[user].socket.emit("message",that.solve(command.value))
+            that.robot.room.users[user].socket.emit("message",that.robot.name + ":" + that.solve(command.value))
         }
       }
+    }
+
+    this.controlTable["shoot"] = function(command) {
+        var direction = 0
+
+        if (command.direction.type == "number") {
+          direction = parseInt(command.direction.value)
+        } else if (command.direction.type == "variable") {
+          direction = that.variables[command.direction.value]
+        }else {
+          direction =that.solve(command.direction)
+        }
+
+        var p1 = {x:that.robot.x, y:that.robot.y}
+
+        var aX = that.robot.x + 100 * Math.sin(direction * Math.PI / 180);
+        var aY = that.robot.y + 100 * Math.cos(direction * Math.PI / 180);
+        var p2 = {x:aX, y:aY}
+
+        var robots = that.robot.room.robots
+        that.robot.energy--
+
+        for (var i in robots) {
+          if (robots[i] === that.robot) {
+            continue;
+          }
+          var circle = {center:{x:robots[i].x, y:robots[i].y}, radius: robots[i].size}
+          var points = inteceptCircleLineSeg(circle, {p1:p1, p2:p2})
+          if (points.length > 0) {
+            robots[i].energy -=  2
+            var room = that.robot.room
+            for (var i = 0; i < room.users.length; i++) {
+              room.users[i].socket.emit("shoot", that.robot.name, robots[i].name)
+            }
+            return 1
+          }
+        }
     }
 
     this.controlTable["move"] = function(command) {
@@ -142,6 +179,34 @@ class Interpreter {
 
 
     this.functionTable = []
+    this.functionTable["scan"] = function(params) {
+      if (params.length === 1) {
+
+        var direction = params[0].value
+
+        var p1 = {x:that.robot.x, y:that.robot.y}
+
+        var aX = that.robot.x + 100 * Math.sin(direction * Math.PI / 180);
+        var aY = that.robot.y + 100 * Math.cos(direction * Math.PI / 180);
+        var p2 = {x:aX, y:aY}
+
+        var robots = that.robot.room.robots
+        for (var i in robots) {
+          if (robots[i] === that.robot) {
+            continue;
+          }
+          var circle = {center:{x:robots[i].x, y:robots[i].y}, radius: robots[i].size}
+          console.log(circle, {p1:p1, p2:p2})
+          var points = inteceptCircleLineSeg(circle, {p1:p1, p2:p2})
+          console.log(points)
+          if (points.length > 0) {
+            return 1
+          }
+        }
+      }
+      return 0
+    }
+
     this.functionTable["getX"] = function(params) {
       return that.robot.x
     }
@@ -343,8 +408,8 @@ class Tokenizer {
 
     var state = "search" //state = string, number
     var specialCharacters = ["=","+","-","*","/","<",">","(",")","!"]
-    var builtInfunctions = ["getX","getY","sin","cos","tan","rand"]
-    var controlFunctions = ["if","endif","goto","print","move","else"]
+    var builtInfunctions = ["getX","getY","sin","cos","tan","rand","scan"]
+    var controlFunctions = ["if","endif","goto","print","move","else","shoot"]
 
     //Go through each line and create tokens.
     var tokenizedProgram = []
@@ -451,7 +516,7 @@ class Token {
 
 var friction = 0.2
 class Robot {
-  constructor(program, cpu, clock, x, y, direction, room) {
+  constructor(program, cpu, clock, x, y, direction, room, name) {
     var tokenizer = new Tokenizer()
     var tokenizedProgram = tokenizer.tokenize(program)
     var parser = new Parser()
@@ -461,6 +526,10 @@ class Robot {
     } else {
       this.stopped = true
     }
+
+    this.size = 5
+    this.energy = 10
+    this.name = name || "Default"
 
 
     this.cpu = cpu
@@ -488,12 +557,21 @@ class Robot {
   }
 
   update() {
-    if (this.stopped === false) {
+    if (this.stopped === false && this.energy > 0) {
       this.cycle++
     }
     if (this.cycle >= this.clock) {
       this.process()
       this.cycle = 0
+    }
+
+    if (!this.stopped && this.energy < 1) {
+      this.stopped = true
+      this.energy = 0
+      var room = this.room
+      for (var i = 0; i < room.users.length; i++) {
+        room.users[i].socket.emit("message", this.name + " has been taken offline!")
+      }
     }
     //Add velocity
     this.x += this.vX
@@ -544,11 +622,14 @@ class Robot {
   }
 
   process() {
-    var step = 0
-    while (step < this.cpu) {
-      this.interpreter.step()
-      step++
+    if (this.interpreter != undefined) {
+      var step = 0
+      while (step < this.cpu) {
+        this.interpreter.step()
+        step++
+      }
     }
+
   }
 
   reboot() {
@@ -617,12 +698,18 @@ class Parser {
             commands.push({type:"control", cmd:"else"})
             this.position++
             break;
-          case "move":
-          this.position++
-          var direction = this.getExpression()
-          var speed = this.getExpression()
-          commands.push({type:"control", cmd:"move", direction:direction, speed:speed})
-          break;
+            case "move":
+            this.position++
+            var direction = this.getExpression()
+            var speed = this.getExpression()
+            commands.push({type:"control", cmd:"move", direction:direction, speed:speed})
+            break;
+
+            case "shoot":
+            this.position++
+            var direction = this.getExpression()
+            commands.push({type:"control", cmd:"shoot", direction:direction})
+            break;
 
           default: this.position++
         }
@@ -739,6 +826,10 @@ class Room {
     this.running = false
 	}
 
+  clear() {
+    this.robots = []
+  }
+
   start(user) {
     if (user === this.owner) {
       this.running = true
@@ -796,12 +887,26 @@ module.exports = {
 
 		socket.on("disconnect", () => {
 			console.log("Disconnected: " + socket.id);
+      if (user.currentRoom != null) {
+        rooms[user.currentRoom].removeUser(user)
+      }
 			removeUser(user);
 		});
 
-		socket.on("setName", (name) => {
+    socket.on("setName", (name) => {
 			user.name = name
 		})
+
+    socket.on("clear", () => {
+      if (rooms[user.currentRoom] != undefined) {
+        if (rooms[user.currentRoom].owner === user) {
+          rooms[user.currentRoom].clear()
+          socket.emit("message","Cleared room")
+        } else {
+          socket.emit("alert", name + " : not owner");
+        }
+      }
+    })
 
 		socket.on("createRoom", (name, locked) => {
       console.log(name)
@@ -846,12 +951,12 @@ module.exports = {
 
     })
 
-    socket.on("addRobot",(program,cpu,clock) => {
+    socket.on("addRobot",(program,cpu,clock, name) => {
       if (user.currentRoom != null) {
         var splitProgram = program.split(/\r?\n/)
-        var robot = new Robot(splitProgram, cpu, clock, 150, 150, 0, rooms[user.currentRoom])
+        var robot = new Robot(splitProgram, cpu, clock, 150, 150, 0, rooms[user.currentRoom], name)
         rooms[user.currentRoom].robots.push(robot)
-        socket.emit("message","robot added")
+        socket.emit("message",name + " has entered the arena.")
       }
     })
 
@@ -862,6 +967,39 @@ module.exports = {
 	}
 };
 
+function inteceptCircleLineSeg(circle, line){
+    var a, b, c, d, u1, u2, ret, retP1, retP2, v1, v2;
+    v1 = {};
+    v2 = {};
+    v1.x = line.p2.x - line.p1.x;
+    v1.y = line.p2.y - line.p1.y;
+    v2.x = line.p1.x - circle.center.x;
+    v2.y = line.p1.y - circle.center.y;
+    b = (v1.x * v2.x + v1.y * v2.y);
+    c = 2 * (v1.x * v1.x + v1.y * v1.y);
+    b *= -2;
+    d = Math.sqrt(b * b - 2 * c * (v2.x * v2.x + v2.y * v2.y - circle.radius * circle.radius));
+    if(isNaN(d)){ // no intercept
+        return [];
+    }
+    u1 = (b - d) / c;  // these represent the unit distance of point one and two on the line
+    u2 = (b + d) / c;
+    retP1 = {};   // return points
+    retP2 = {}
+    ret = []; // return array
+    if(u1 <= 1 && u1 >= 0){  // add point if on the line segment
+        retP1.x = line.p1.x + v1.x * u1;
+        retP1.y = line.p1.y + v1.y * u1;
+        ret[0] = retP1;
+    }
+    if(u2 <= 1 && u2 >= 0){  // second add point if on the line segment
+        retP2.x = line.p1.x + v1.x * u2;
+        retP2.y = line.p1.y + v1.y * u2;
+        ret[ret.length] = retP2;
+    }
+    return ret;
+}
+
 function update() {
   for (var room in rooms) {
       if (rooms[room].users.length > 0) {
@@ -869,7 +1007,7 @@ function update() {
         for (var i = 0; i < rooms[room].users.length; i++) {
           var robots = []
           for (var index in rooms[room].robots) {
-            robots.push({x:rooms[room].robots[index].x, y:rooms[room].robots[index].y, direction:rooms[room].robots[index].direction})
+            robots.push({x:rooms[room].robots[index].x, y:rooms[room].robots[index].y, direction:rooms[room].robots[index].direction, size:rooms[room].robots[index].size})
           }
           rooms[room].users[i].socket.emit("update", robots)
         }
@@ -882,9 +1020,7 @@ function update() {
 function availableRoomUpdater() {
   var availableRooms = []
   for (var room in rooms) {
-      if (rooms[room].users.length > 0) {
-        availableRooms.push(room)
-        }
+    availableRooms.push({name:room, numUsers:rooms[room].users.length})
   }
 
   for (var id in users) {

@@ -1,0 +1,212 @@
+body {
+font-family: "Courier New", Courier, monospace;
+font-size: 16px;
+width: 100%;
+height: 100%;
+z-index:0
+}
+
+#ide {
+  font-family: "Courier New", Courier, monospace;
+  font-size: 16px;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
+
+#inRoom {
+  width:98%;
+  height:95%;
+  margin: auto;
+  border-style:solid;
+  border-width: 8px;
+  border-color: #3E31A2;
+  background-color: #ABABAB;
+}
+
+#notInRoom {
+  width:98%;
+  height:95%;
+  margin: auto;
+  border-style:solid;
+  border-width: 8px;
+  border-color: #3E31A2;
+  background-color: #ABABAB;
+}
+
+
+.left {
+  width:66.7%;
+  float: left;
+}
+
+.right {
+  width:33.3%;
+  float: right;
+}
+
+.center {
+  text-align: center;
+}
+
+h3 {
+  background-color:#ABABAB;
+  display: inline-block;
+  width: 100%;
+  padding: 10px 0 10px 0;
+  margin-top: 0;
+
+  position: relative;
+  font-size: 30px;
+  z-index: 1;
+  margin-bottom: 0;
+  overflow: hidden;
+}
+
+h3:before, h3:after {
+    margin-left: 10px;
+    position: absolute;
+    top: 51%;
+    overflow: hidden;
+    width: 50%;
+    height: 8px;
+    content: '\a0';
+    background-color: #3E31A2;
+}
+
+h3:before {
+    margin-left: -53%;
+    text-align: right;
+}
+
+input {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0px;
+  background-color: white;
+  color: black;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 16px;
+  padding: 5px 5px 5px 5px;
+}
+
+label {
+  font-weight: bold;
+}
+
+button {
+ border: 0;
+ background: none;
+ box-shadow: none;
+ border-radius: 0px;
+ background-color: #7E72DC;
+ color: white;
+ font-family: "Courier New", Courier, monospace;
+ font-size: 16px;
+ padding: 5px 20px 5px 20px;
+}
+
+.rightAlign:after {
+  width: 98%
+}
+
+.create {
+  background-color:#ABABAB;
+  text-align: center;
+}
+
+.availableRooms {
+  background-color:#ABABAB;
+}
+
+.availableRooms .tableDiv {
+  height: 70%;
+  width: 60%;
+  background-color:#4a4a4a;
+  margin:0 auto 0 auto;
+  overflow-y: auto;
+}
+
+.availableRooms table {
+  width: 90%;
+  background-color:#4a4a4a;
+  margin:0 auto 0 auto;
+  color: white;
+}
+
+.availableRooms td {
+  text-align: center;
+}
+
+
+.arena {
+  background-color:black;
+  width:100%;
+  height: 60%;
+  text-align: center;
+}
+
+.arena canvas {
+  background-color:#4a4a4a;
+  max-height: 100%;
+  max-width: 100%;
+  width: 100%;
+  z-index:1;
+
+}
+
+.programEditor {
+  background-color:white;
+  height: 70%;
+  width: 97%;
+  border-left-style: solid;
+  border-left-width: 8px;
+  border-left-color: #3E31A2;
+  display: inline-block;
+}
+
+.programEditor textarea {
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+}
+
+.robotSettings {
+  margin-left:2%;
+  background-color:#ABABAB;
+  height: 20%;
+  width: 100%;
+  display:inline-block;
+}
+
+
+.robotSettings #cpus {
+  width: 32px;
+}
+
+.robotSettings #freq {
+  width: 32px;
+}
+
+.roomFunctions {
+  margin-left:2%;
+  background-color:#ABABAB;
+  height:20%;
+  width: 100%;
+  display:inline-block;
+}
+
+.messages {
+  margin-top: 0;
+  margin-bottom: 0;
+  background-color:white;
+  height: 30%;
+  width:97%;
+  border-left-style: solid;
+  border-left-width: 8px;
+  border-left-color: #3E31A2;
+  display: inline-block;
+  overflow: scroll;
+}

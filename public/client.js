@@ -1,17 +1,13 @@
 "use strict";
 
-
-
     let socket
 
     var outputDiv = document.getElementById('output')
-    var debugDiv = document.getElementById('debug')
     var cpus = document.getElementById('cpus')
     var freq = document.getElementById('freq')
+    var nameInput = document.getElementById('name')
     var ide = document.getElementById('ide')
     var canvas = document.getElementById("main");
-    canvas.width = 640;
-    canvas.height = 480;
     var ctx = canvas.getContext("2d");
 
     var engine = {
@@ -30,7 +26,7 @@
           var robot = this.robots[i]
           ctx.strokeStyle = 'red'; // Stroke in white
           ctx.beginPath();
-          ctx.arc(robot.x, robot.y, 5, 0, 2 * Math.PI);
+          ctx.arc(robot.x, robot.y, robot.size, 0, 2 * Math.PI);
           ctx.stroke();
 
           var aX = robot.x + 6 * Math.sin(robot.direction * Math.PI / 180);
@@ -49,9 +45,12 @@
     }
 
     function addRobot(){
-      socket.emit("addRobot",ide.value,cpus.value,freq.value)
+      socket.emit("addRobot",ide.value,cpus.value,freq.value, nameInput.value)
     }
 
+    function clearRoom() {
+      socket.emit("clear")
+    }
 
     function stopProgram(){
       socket.emit("stop")
@@ -134,15 +133,22 @@
           engine.draw()
         });
 
+        socket.on("shoot", (shooter, shot) => {
+          addToOutput(shooter + " shot " + shot)
+          //play sound
+        });
+
         socket.on("alert",(msg) => {
           alert(msg)
         })
 
         socket.on("availableRooms", (rooms) => {
           var roomsDiv = document.getElementById("rooms");
-          roomsDiv.innerHTML = ""
-          for (var room in rooms) {
-            roomsDiv.innerHTML += "<li>"+rooms[room]+"   <button onclick='joinRoom(\""+rooms[room]+"\")'>join</button></li>"
+          roomsDiv.innerHTML = "<tr><th>Name</th><th>Number of Users</th><th></th></tr>"
+          for (var i in rooms) {
+            var room = rooms[i]
+            roomsDiv.innerHTML += "<tr><td>"+room.name + "</td><td>" + room.numUsers + "</td><td>   <button onclick='joinRoom(\""+room.name+"\")'>join</button></td></tr>"
+
           }
         })
     }
