@@ -42,7 +42,7 @@
           ctx.lineTo(aX,aY);
           ctx.stroke();
 
-          ctx.font = "8px Courier New";
+          ctx.font = "8px retroFont";
           ctx.fillStyle = "white"
           ctx.fillText(robot.name + " : " + robot.energy,robot.x - robot.size,robot.y - robot.size - 5);
         }

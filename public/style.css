@@ -1,5 +1,9 @@
+@font-face {
+  font-family: retroFont;
+  src: url(retro.TTF)
+}
 body {
-font-family: "Courier New", Courier, monospace;
+font-family: "retroFont";
 font-size: 16px;
 width: 100%;
 height: 100%;
@@ -94,7 +98,7 @@ input {
   border-radius: 0px;
   background-color: white;
   color: black;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "retroFont";
   font-size: 16px;
   padding: 5px 5px 5px 5px;
 }
@@ -110,7 +114,7 @@ button {
  border-radius: 0px;
  background-color: #7E72DC;
  color: white;
- font-family: "Courier New", Courier, monospace;
+ font-family: "retroFont";
  font-size: 16px;
  padding: 5px 20px 5px 20px;
  margin-bottom: 10px;
