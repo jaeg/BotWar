@@ -619,22 +619,22 @@ class Robot {
     //Deal with the edge of the arena
     if (this.x > this.room.width) {
       this.x = this.room.width
-      this.vx = 0
+      this.vX *= -1
     }
 
     if (this.x < 0) {
       this.x = 0
-      this.vx = 0
+      this.vX *= -1
     }
 
     if (this.y > this.room.height) {
       this.y = this.room.height
-      this.vy = 0
+      this.vY *= -1
     }
 
     if (this.y < 0) {
       this.y = 0
-      this.vy = 0
+      this.vY *= -1
     }
 
     //Deal with annoying javascript math
@@ -988,7 +988,10 @@ module.exports = {
     socket.on("addRobot",(program,cpu,clock, name) => {
       if (user.currentRoom != null) {
         var splitProgram = program.split(/\r?\n/)
-        var robot = new Robot(splitProgram, cpu, clock, 150, 150, 0, rooms[user.currentRoom], name)
+
+        var ranX = Math.floor(Math.random() * rooms[user.currentRoom].width)
+        var ranY = Math.floor(Math.random() * rooms[user.currentRoom].height)
+        var robot = new Robot(splitProgram, cpu, clock, ranX, ranY, 0, rooms[user.currentRoom], name)
         rooms[user.currentRoom].robots.push(robot)
         socket.emit("message",name + " has entered the arena.")
       }
