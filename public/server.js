@@ -971,28 +971,35 @@ module.exports = {
 
 		socket.on("leaveRoom", (name) => {
       if (user.currentRoom != null) {
+        if (rooms[user.currentRoom] !== undefined) {
         rooms[user.currentRoom].removeUser(user)
         user.currentRoom = null
         socket.emit("leftRoom");
+      }
       }
 		});
 
     socket.on("start", () => {
         if (rooms[user.currentRoom] !== null) {
-          rooms[user.currentRoom].start(user)
+          if (rooms[user.currentRoom] !== undefined) {
+            rooms[user.currentRoom].start(user)
+          }
         }
 
     })
 
     socket.on("stop", () => {
         if (rooms[user.currentRoom] !== null) {
-          rooms[user.currentRoom].stop(user)
+          if (rooms[user.currentRoom] !== undefined) {
+            rooms[user.currentRoom].stop(user)
+          }
         }
 
     })
 
     socket.on("addRobot",(program,cpu,clock, name) => {
       if (user.currentRoom != null) {
+        if (rooms[user.currentRoom] !== undefined) {
         var splitProgram = program.split(/\r?\n/)
 
         var ranX = Math.floor(Math.random() * rooms[user.currentRoom].width)
@@ -1000,6 +1007,7 @@ module.exports = {
         var robot = new Robot(splitProgram, cpu, clock, ranX, ranY, 0, rooms[user.currentRoom], name)
         rooms[user.currentRoom].robots.push(robot)
         socket.emit("message",name + " has entered the arena.")
+      }
       }
     })
 
