@@ -46,6 +46,8 @@ class Interpreter {
           direction =that.solve(command.direction)
         }
 
+        that.robot.turretDir = direction
+
         var p1 = {x:that.robot.x, y:that.robot.y}
 
         var aX = that.robot.x + 100 * Math.sin(direction * Math.PI / 180);
@@ -53,7 +55,7 @@ class Interpreter {
         var p2 = {x:aX, y:aY}
 
         var robots = that.robot.room.robots
-        that.robot.energy--
+        that.robot.energy -= 2
 
         for (var i in robots) {
           if (robots[i] === that.robot) {
@@ -62,7 +64,7 @@ class Interpreter {
           var circle = {center:{x:robots[i].x, y:robots[i].y}, radius: robots[i].size}
           var points = inteceptCircleLineSeg(circle, {p1:p1, p2:p2})
           if (points.length > 0) {
-            robots[i].energy -=  2
+            robots[i].energy -=  5
             var room = that.robot.room
             for (var i = 0; i < room.users.length; i++) {
               room.users[i].socket.emit("shoot", that.robot.name, robots[i].name)
@@ -189,6 +191,8 @@ class Interpreter {
         if (params[0].type == "variable") {
           direction = that.variables[params[0].value]
         }
+
+        that.robot.turretDir = direction
 
         var p1 = {x:that.robot.x, y:that.robot.y}
 
@@ -546,8 +550,10 @@ class Robot {
       this.stopped = true
     }
 
-    this.size = 5
-    this.energy = 50
+    this.turretDir = 0
+
+    this.size = 10
+    this.energy = 100
     this.name = name || "Default"
 
 
@@ -1045,7 +1051,7 @@ function update() {
           var robots = []
           for (var index in rooms[room].robots) {
             var robot = rooms[room].robots[index]
-            robots.push({x:robot.x, y:robot.y, direction:robot.direction, size:robot.size, name: robot.name, energy: robot.energy})
+            robots.push({x:robot.x, y:robot.y, direction:robot.direction, size:robot.size, name: robot.name, energy: robot.energy, turretDir: robot.turretDir})
           }
           rooms[room].users[i].socket.emit("update", robots)
         }

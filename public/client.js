@@ -30,13 +30,23 @@
           if (colorI > colors.length - 1) {
             colorI = colorI % colors.length
           }
+          ctx.lineWidth=3
           ctx.strokeStyle = colors[colorI]
           ctx.beginPath();
           ctx.arc(robot.x, robot.y, robot.size, 0, 2 * Math.PI);
           ctx.stroke();
 
-          var aX = robot.x + 6 * Math.sin(robot.direction * Math.PI / 180);
-          var aY = robot.y + 6 * Math.cos(robot.direction * Math.PI / 180);
+          ctx.strokeStyle = "white"
+          var aX = robot.x + (robot.size + 2) * Math.sin(robot.direction * Math.PI / 180);
+          var aY = robot.y + (robot.size + 2)  * Math.cos(robot.direction * Math.PI / 180);
+          ctx.beginPath();
+          ctx.moveTo(robot.x,robot.y);
+          ctx.lineTo(aX,aY);
+          ctx.stroke();
+
+          ctx.strokeStyle = "black"
+          aX = robot.x + (robot.size + 4) * Math.sin(robot.turretDir * Math.PI / 180);
+          aY = robot.y + (robot.size + 4)  * Math.cos(robot.turretDir * Math.PI / 180);
           ctx.beginPath();
           ctx.moveTo(robot.x,robot.y);
           ctx.lineTo(aX,aY);
@@ -86,8 +96,12 @@
     }
 
     function addToOutput(text) {
+      var temp = outputDiv.innerHTML
+      temp = temp.replace('style="color:green"', "")
+      outputDiv.innerHTML = ""
+      outputDiv.innerHTML += "<span style='color:green'>" + text + "</span>"
       outputDiv.innerHTML += "</br>"
-      outputDiv.innerHTML += text
+      outputDiv.innerHTML += temp
     }
 
     function addToDebug(text) {
